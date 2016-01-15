@@ -1,0 +1,25 @@
+{
+  "name": "gecko-packages/gecko-silex/services/config",
+  "type": "library",
+  "homepage": "https://github.com/GeckoPackages",
+  "description": "Configuration service for Silex.",
+  "license": "MIT",
+  "keywords" : ["Silex", "Config", "Configuration", "Yaml"],
+  "require": {
+    "php": ">=5.4.0",
+    "silex/silex": "~1.1",
+    "symfony/filesystem": "2.7.3"
+  },
+  "require-dev": {
+    "symfony/yaml": "~2.6",
+    "gecko-packages/gecko-memcache-mock" : "0.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "GeckoPackages\\Silex\\Services\\Config\\": "src\\Config"
+    }
+  },
+  "suggest": {
+    "symfony/yaml": "For using Yaml formatted configuration files."
+  }
+}

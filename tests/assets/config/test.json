@@ -1,0 +1,7 @@
+{
+  "options":{
+    "test":{
+      "driver":"pdo_mysql"
+    }
+  }
+}
