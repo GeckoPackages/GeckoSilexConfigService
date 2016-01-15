@@ -1,6 +1,6 @@
 #### GeckoPackages
 
-# Silex/Services/ConfigServiceProvider
+# Silex config service
 
 A service provider for [ Silex ](http://silex.sensiolabs.org) for loading configuration files.
 Supported formats:
