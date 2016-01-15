@@ -1,5 +1,5 @@
 {
-  "name": "gecko-packages/gecko-silex/services/config",
+  "name": "gecko-packages/gecko-silex-config-service",
   "type": "library",
   "homepage": "https://github.com/GeckoPackages",
   "description": "Configuration service for Silex.",
