@@ -19,7 +19,7 @@ Add the package to your `composer.json`.
 
 ```
 "require-dev": {
-    "gecko-packages/silex/services/config" : "0.1"
+    "gecko-packages/gecko-silex-config-service" : "0.1"
 }
 ```
 
