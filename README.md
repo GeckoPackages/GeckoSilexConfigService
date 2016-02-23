@@ -18,7 +18,7 @@ The package can be installed using Composer (https://getcomposer.org/).
 Add the package to your `composer.json`.
 
 ```
-"require-dev": {
+"require": {
     "gecko-packages/gecko-silex-config-service" : "0.1"
 }
 ```
