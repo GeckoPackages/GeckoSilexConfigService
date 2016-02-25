@@ -14,7 +14,7 @@ PHP 5.4.0
 
 ### Install
 
-The package can be installed using Composer (https://getcomposer.org/).
+The package can be installed using [ Composer ](https://getcomposer.org/).
 Add the package to your `composer.json`.
 
 ```
