@@ -19,7 +19,7 @@ Add the package to your `composer.json`.
 
 ```
 "require": {
-    "gecko-packages/gecko-silex-config-service" : "0.1"
+    "gecko-packages/gecko-silex-config-service" : "1.1"
 }
 ```
 
@@ -116,12 +116,25 @@ You can simply get the value like:
 ```twig
 {{ app.config.foo.bar.test }}
 ```
+## Custom name registering / multiple services
 
-# Roadmap
+You can register the service using a name other than the default name `config`.
+The same method can be used to register multiple configuration services.
+Pass the name at the constructor of the service and use the same name as prefix for the configuration.
+For example:
 
-* Update to Silex 2.0
-* Add file based caching of read configuration
-* (Note: no update for Twig 2.0 required)
+```php
+
+// first service
+$app->register(new ConfigServiceProvider('config.database'), array('config.database.dir' => $configDatabaseDir));
+
+// second service
+$app->register(new ConfigServiceProvider('config.test'), array('config.test.dir' => $configTestDir));
+
+// usage
+$app['config.database']->get('db.user.name');
+
+```
 
 ### License
 
