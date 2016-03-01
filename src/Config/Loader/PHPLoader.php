@@ -31,7 +31,7 @@ final class PHPLoader implements LoaderInterface
 
         $config = require $file;
         if (false === is_array($config)) {
-            throw new \RuntimeException(sprintf('File did not return array "%s".', $file));
+            throw new \UnexpectedValueException(sprintf('Expected array as configuration, got: "%s", in "%s".', gettype($config), $file));
         }
 
         return $config;
