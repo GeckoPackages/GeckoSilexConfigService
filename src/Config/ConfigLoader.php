@@ -38,7 +38,7 @@ class ConfigLoader implements \ArrayAccess
     private $config = array();
 
     /**
-     * @var string
+     * @var string|null
      */
     private $configDirectory;
 
@@ -53,30 +53,33 @@ class ConfigLoader implements \ArrayAccess
     private $format;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     private $cache;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     private $environment;
 
     /**
      * @param Application $app
-     * @param string      $dir
+     * @param string|null $dir
      * @param string      $format      default: '%key%.json' @see ConfigLoader::setFormat
-     * @param string      $cache       name under which a cache service is registered,
+     * @param string|null $cache       name under which a cache service is registered,
      *                                 default: null (don't use caching)
-     * @param string      $environment default: null @see ConfigLoader::setEnvironment
+     * @param string|null $environment default: null @see ConfigLoader::setEnvironment
      */
     public function __construct(Application $app, $dir = null, $format = '%key%.json', $cache = null, $environment = null)
     {
         $this->app = $app;
-        $this->setDir($dir);
+        if (null !== $dir) {
+            $this->setDir($dir);
+        }
+
         $this->setFormat($format);
         $this->environment = null === $environment ? '' : $environment;
-        $this->cache = $cache;
+        $this->cache = $cache; // always set last to prevent cache flushes on construction
     }
 
     /**
@@ -85,6 +88,8 @@ class ConfigLoader implements \ArrayAccess
      * @param string $key
      *
      * @return array
+     *
+     * @throws FileNotFoundException
      */
     public function get($key)
     {
@@ -126,7 +131,7 @@ class ConfigLoader implements \ArrayAccess
     /**
      * Returns the directory where this class looks for configuration files.
      *
-     * @return string
+     * @return string|null
      */
     public function getDir()
     {
@@ -149,14 +154,27 @@ class ConfigLoader implements \ArrayAccess
      * Triggers @see ConfigLoader::flushAll.
      *
      * @param string $dir Full path
+     *
+     * @throws FileNotFoundException
      */
-    public function setDir($dir = null)
+    public function setDir($dir)
     {
         if (!is_dir($dir)) {
             throw new FileNotFoundException(sprintf('Config "%s" is not a directory.', is_string($dir) ? $dir : (is_object($dir) ? get_class($dir) : gettype($dir))));
         }
 
-        $this->configDirectory = realpath($dir).'/';
+        $newDir = realpath($dir).'/';
+        if (null === $this->configDirectory) {
+            $this->configDirectory = $newDir;
+
+            return;
+        }
+
+        if ($newDir === $this->configDirectory) {
+            return;
+        }
+
+        $this->configDirectory = $newDir;
         $this->flushAll();
     }
 
@@ -241,7 +259,7 @@ class ConfigLoader implements \ArrayAccess
     {
         if (null !== $this->cache) {
             foreach ($this->config as $config) {
-                if (isset($config['cacheKey'])) {
+                if (array_key_exists('cacheKey', $config)) {
                     $this->app[$this->cache]->delete($config['cacheKey']);
                 }
             }
@@ -271,30 +289,29 @@ class ConfigLoader implements \ArrayAccess
     // Magic function support, for Twig etc.,
     // @see http://twig.sensiolabs.org/doc/recipes.html#using-dynamic-object-properties
 
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
     public function __isset($name)
     {
         try {
             return is_array($this->get($name));
         } catch (FileNotFoundException $e) {
-
         } // do not catch parsing errors and such
 
         return false;
     }
 
+    /**
+     * @param string $name
+     *
+     * @return array
+     */
     public function __get($name)
     {
         return $this->get($name);
-    }
-
-    /**
-     * @param string $key
-     *
-     * @return string
-     */
-    private function getFileNameForKey($key)
-    {
-        return $this->getDir().strtr($this->format, array('%key%' => $key, '%env%' => $this->environment));
     }
 
     /**
@@ -318,7 +335,7 @@ class ConfigLoader implements \ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        throw new \BadMethodCallException('offsetSet is not supported.');
+        throw new \BadMethodCallException('"offsetSet" is not supported.');
     }
 
     /**
@@ -326,6 +343,16 @@ class ConfigLoader implements \ArrayAccess
      */
     public function offsetUnset($offset)
     {
-        throw new \BadMethodCallException('offsetUnset is not supported.');
+        throw new \BadMethodCallException('"offsetUnset" is not supported.');
+    }
+
+    /**
+     * @param string $key
+     *
+     * @return string
+     */
+    private function getFileNameForKey($key)
+    {
+        return $this->getDir().strtr($this->format, array('%key%' => $key, '%env%' => $this->environment));
     }
 }

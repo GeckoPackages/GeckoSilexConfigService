@@ -34,10 +34,14 @@ final class JsonLoader implements LoaderInterface
             throw new IOException(sprintf('Failed to load config file "%s".', $file));
         }
 
-        if (null !== $config = json_decode($config, true)) {
-            return $config;
+        if (null === $config = json_decode($config, true)) {
+            throw new \UnexpectedValueException(sprintf('Invalid JSON: "%s", in "%s".', json_last_error_msg(), $file));
         }
 
-        throw new \RuntimeException(sprintf('Invalid JSON: "%s", in "%s".', json_last_error_msg(), $file));
+        if (false === is_array($config)) {
+            throw new \UnexpectedValueException(sprintf('Expected array as configuration, got: "%s", in "%s".', gettype($config), $file));
+        }
+
+        return $config;
     }
 }

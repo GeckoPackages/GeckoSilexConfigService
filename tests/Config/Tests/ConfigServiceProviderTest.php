@@ -21,6 +21,28 @@ use Silex\Application;
  */
 final class ConfigServiceProviderTest extends AbstractConfigTest
 {
+    public function testServiceRegisterNaming()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+
+        $configDatabaseDir = realpath(__DIR__.'/../../assets').'/';
+        $app->register(new ConfigServiceProvider('config.database'), array('config.database.dir' => $configDatabaseDir));
+
+        $configTest = realpath(__DIR__.'/../../Config').'/';
+        $app->register(new ConfigServiceProvider('config.test'), array('config.test.dir' => $configTest));
+
+        $this->assertFalse(isset($app['config']));
+
+        $this->assertTrue(isset($app['config.database']));
+        $this->assertInstanceOf('GeckoPackages\Silex\Services\Config\ConfigLoader', $app['config.database']);
+        $this->assertSame($configDatabaseDir, $app['config.database']->getDir());
+
+        $this->assertTrue(isset($app['config.test']));
+        $this->assertInstanceOf('GeckoPackages\Silex\Services\Config\ConfigLoader', $app['config.test']);
+        $this->assertSame($configTest, $app['config.test']->getDir());
+    }
+
     public function testPHPConfig()
     {
         $configValue = array('test' => 1, 'lvl2' => array('20' => 'two zero', 21 => 'two one'));
@@ -38,7 +60,6 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->assertTrue($app['config']->__isset('__conf'));
         // test that no exception is thrown but false is returned
         $this->assertFalse($app['config']->__isset('__conf_invalid__'));
-
         $this->assertSame($configValue, $app['config']->__get('__conf'));
     }
 
@@ -83,10 +104,8 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->setupConfigService($app);
 
         $this->assertSame(
-            array(
-                'options' => array('test' => array('driver' => 'pdo_mysql')),
-            ),
-            $config = $app['config']->get('test')
+            array('options' => array('test' => array('driver' => 'pdo_mysql'))),
+            $app['config']->get('test')
         );
 
         // simple flush test
@@ -103,10 +122,8 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->setupConfigService($app);
 
         $this->assertSame(
-            array(
-                'options' => array('test' => array('driver' => 'pdo_mysql')),
-            ),
-            $config = $app['config']->get('test')
+            array('options' => array('test' => array('driver' => 'pdo_mysql'))),
+            $app['config']->get('test')
         );
 
         $dir = $app['config']->getDir().'../config2';
@@ -116,6 +133,9 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
             array('options' => array('test2' => 'new_dir')),
             $app['config']->get('test')
         );
+
+        $this->assertTrue($app['config']->offsetExists('test'));
+        $this->assertFalse($app['config']->offsetExists('test123'));
     }
 
     /**
@@ -126,7 +146,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
     {
         $app = new Application();
         $app['debug'] = true;
-        $app->register(new ConfigServiceProvider(), array('config.dir' => __DIR__));
+        $app->register(new ConfigServiceProvider(), array('config.dir' => null)); // null is a valid value upon creation
         $app['config']->setDir('/a/b/c/');
     }
 
@@ -220,5 +240,17 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['debug'] = true;
         $this->setupConfigService($app);
         $app['config']->setFormat('%key%json');
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessageRegExp /Expected array as configuration, got: "integer", in ".*integer.json"./
+     */
+    public function testJsonNotArray()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app);
+        $app['config']->get('integer');
     }
 }

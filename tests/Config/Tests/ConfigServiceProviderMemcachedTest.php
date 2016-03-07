@@ -13,6 +13,7 @@ namespace GeckoPackages\Silex\Services\Config\Tests;
 
 use GeckoPackages\MemcacheMock\MemcachedLogger;
 use GeckoPackages\MemcacheMock\MemcachedMock;
+use GeckoPackages\Silex\Services\Config\ConfigServiceProvider;
 use Silex\Application;
 
 /**
@@ -22,6 +23,45 @@ use Silex\Application;
  */
 final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
 {
+    public function testDoNotTouchCacheOnConstruction()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $app['memcache'] = $this->getMemcacheMock();
+        $this->setupConfigService($app, '%key%.json', 'memcache');
+
+        $logger = $app['memcache']->getLogger();
+        $logger = $logger->getLogger();
+        $log = $logger->getDebugLog();
+        $this->assertCount(0, $log);
+    }
+
+    public function testDoNotTouchCacheOnFirstDirSet()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $app['memcache'] = $this->getMemcacheMock();
+        $app->register(
+            new ConfigServiceProvider(),
+            array(
+                'config.dir' => null,
+                'config.cache' => 'memcache',
+            )
+        );
+
+        $logger = $app['memcache']->getLogger();
+        $logger = $logger->getLogger();
+        $log = $logger->getDebugLog();
+        $this->assertCount(0, $log);
+
+        $app['config']->setDir(__DIR__);
+
+        $logger = $app['memcache']->getLogger();
+        $logger = $logger->getLogger();
+        $log = $logger->getDebugLog();
+        $this->assertCount(0, $log);
+    }
+
     public function testUsingCache()
     {
         $configValue = array('options' => array('test' => array('driver' => 'pdo_mysql')));
@@ -35,9 +75,11 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app['config']->flushConfig('test'); // clear cache, get -> 1 set -> 1 delete -> 1
         $app['config']->get('test');         // miss cache,  get -> 2 set -> 2 delete -> 1
 
+        /** @var MemcachedLogger $logger */
         $logger = $app['memcache2']->getLogger();
-        $logger = $logger->getLogger();
 
+        /** @var TestLogger $logger */
+        $logger = $logger->getLogger();
         $log = $logger->getDebugLog();
         $this->assertCount(5, $log);
 
@@ -59,6 +101,17 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $this->assertSame($log[4][0], 'set');
         $this->assertSame($key, $log[4][1]['key']);
         $this->assertSame($configValue, $log[4][1]['value']);
+
+        // setting directory to same location shouldn't trigger cache flush
+        $app['config']->setDir($this->getConfigDir());
+
+        $log = $logger->getDebugLog();
+        $this->assertCount(5, $log);
+
+        $app['config']->setDir(__DIR__);
+
+        $log = $logger->getDebugLog();
+        $this->assertCount(6, $log);
     }
 
     // make sure that when the config loader doesn't have a value

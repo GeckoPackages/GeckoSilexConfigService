@@ -12,6 +12,7 @@
 namespace GeckoPackages\Silex\Services\Config\Loader;
 
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
  * @author SpacePossum
@@ -24,6 +25,8 @@ interface LoaderInterface
      * @return array
      *
      * @throws FileNotFoundException
+     * @throws IOException
+     * @throws \UnexpectedValueException
      */
     public function getConfig($file);
 }
