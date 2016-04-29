@@ -18,7 +18,7 @@ class ConfigLoaderTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @expectedException \BadMethodCallException
-     * @@expectedExceptionMessage "offsetSet" is not supported.
+     * @@expectedExceptionMessageRegExp #^"offsetSet" is not supported.$#
      */
     public function testOffsetSet()
     {
@@ -28,7 +28,7 @@ class ConfigLoaderTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \BadMethodCallException
-     * @@expectedExceptionMessage "offsetUnset" is not supported.
+     * @@expectedExceptionMessageRegExp #^"offsetUnset" is not supported.$#
      */
     public function testOffsetUnset()
     {

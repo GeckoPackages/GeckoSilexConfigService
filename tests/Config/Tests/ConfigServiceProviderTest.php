@@ -140,7 +140,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
 
     /**
      * @expectedException \Symfony\Component\Filesystem\Exception\IOException
-     * @@expectedExceptionMessage Config "/a/b/c/" is not a directory.
+     * @@expectedExceptionMessageRegExp #^Config "/a/b/c/" is not a directory.$#
      */
     public function testDirNotValidException()
     {
@@ -156,7 +156,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
      * @dataProvider provideFormats
      *
      * @expectedException \Symfony\Component\Filesystem\Exception\FileNotFoundException
-     * @expectedExceptionMessageRegExp /Config file not found ".*"./
+     * @expectedExceptionMessageRegExp #^Config file not found ".*".$#
      */
     public function testConfigFileNotFoundException($format)
     {
@@ -196,7 +196,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
 
     /**
      * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Unsupported file format "xls".
+     * @expectedExceptionMessageRegExp #^Unsupported file format "xls".$#
      */
     public function testFileFormatNotSupportedException()
     {
@@ -208,7 +208,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
 
     /**
      * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Format must contain "%key%", got ".xls".
+     * @expectedExceptionMessageRegExp #^Format must contain "%key%", got ".xls".$#
      */
     public function testFileFormatMissingKeyException()
     {
@@ -220,7 +220,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
 
     /**
      * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Format must be a string, got "NULL".
+     * @expectedExceptionMessageRegExp #^Format must be a string, got "NULL".$#
      */
     public function testFileFormatNotStringException()
     {
@@ -232,7 +232,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
 
     /**
      * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Format missing extension, got "%key%json".
+     * @expectedExceptionMessageRegExp #^Format missing extension, got "%key%json".$#
      */
     public function testFileFormatNoExtensionException()
     {
@@ -244,7 +244,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
 
     /**
      * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp /Expected array as configuration, got: "integer", in ".*integer.json"./
+     * @expectedExceptionMessageRegExp #^Expected array as configuration, got: "integer", in ".*integer.json".$#
      */
     public function testJsonNotArray()
     {
