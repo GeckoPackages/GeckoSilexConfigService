@@ -17,6 +17,7 @@ use GeckoPackages\Silex\Services\Config\Loader\PHPLoader;
 use GeckoPackages\Silex\Services\Config\Loader\YamlLoader;
 use Silex\Application;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
  * @api
@@ -90,10 +91,11 @@ class ConfigLoader implements \ArrayAccess
      * @return array
      *
      * @throws FileNotFoundException
+     * @throws IOException
      */
     public function get($key)
     {
-        if (array_key_exists($key, $this->config)) {
+        if (isset($this->config[$key])) {
             // if true, 'config' is also always set
             return $this->config[$key]['config'];
         }
@@ -277,16 +279,17 @@ class ConfigLoader implements \ArrayAccess
      */
     public function flushConfig($key)
     {
-        if (array_key_exists($key, $this->config)) {
-            if (null !== $this->cache && array_key_exists('cacheKey', $this->config[$key])) {
-                $this->app[$this->cache]->delete($this->config[$key]['cacheKey']);
+        if (null !== $this->cache) {
+            if (isset($this->config[$key]) && array_key_exists('cacheKey', $this->config[$key])) {
+                $cacheKey = $this->config[$key]['cacheKey'];
+            } else {
+                $cacheKey = $this->getCacheKeyForFile($this->getFileNameForKey($key));
             }
 
-            unset($this->config[$key]);
-        }else{
-            $file = $this->getFileNameForKey($key);
-            $this->app[$this->cache]->delete($this->getCacheKeyForFile($file));
+            $this->app[$this->cache]->delete($cacheKey);
         }
+
+        unset($this->config[$key]);
     }
 
     // Magic function support, for Twig etc.,
