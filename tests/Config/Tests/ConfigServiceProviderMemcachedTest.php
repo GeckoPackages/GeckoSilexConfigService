@@ -13,6 +13,7 @@ namespace GeckoPackages\Silex\Services\Config\Tests;
 
 use GeckoPackages\MemcacheMock\MemcachedLogger;
 use GeckoPackages\MemcacheMock\MemcachedMock;
+use GeckoPackages\Silex\Services\Config\ConfigLoader;
 use GeckoPackages\Silex\Services\Config\ConfigServiceProvider;
 use Silex\Application;
 
@@ -212,6 +213,37 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $this->assertNotEmpty('string', $log[8][1]['key']);
     }
 
+    public function testCacheFlush()
+    {
+        $key = 'a';
+        $configDatabaseDir = __DIR__;
+        $app = new Application();
+        $app['debug'] = true;
+        $app['testCache'] = new TestCache();
+
+        $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
+
+        $this->assertSame('1:x', $loader->get($key));
+        $this->assertSame('1:x', $loader->get($key));
+
+        $loader->flushConfig($key);
+
+        $this->assertSame('2:1', $loader->get($key));
+        $this->assertSame('2:1', $loader->get($key));
+
+        $this->assertSame(2, $app['testCache']->getTotalCallCount());
+        $this->assertSame(1, $app['testCache']->getTotalFlushCount());
+
+        $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
+        $loader->flushConfig($key);
+
+        $this->assertSame('3:2', $loader->get($key));
+        $this->assertSame('3:2', $loader->get($key));
+
+        $this->assertSame(3, $app['testCache']->getTotalCallCount());
+        $this->assertSame(2, $app['testCache']->getTotalFlushCount());
+    }
+
     private function getMemcacheMock()
     {
         $mock = new MemcachedMock();
@@ -220,5 +252,41 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $mock->setLogger(new MemcachedLogger(new TestLogger()));
 
         return $mock;
+    }
+}
+
+final class TestCache
+{
+    private $callCount = array();
+    private $flushCount = array();
+
+    public function delete($key)
+    {
+        if (!array_key_exists($key, $this->flushCount)) {
+            $this->flushCount[$key] = 0;
+        }
+
+        ++$this->flushCount[$key];
+    }
+
+    public function get($key)
+    {
+        if (!array_key_exists($key, $this->callCount)) {
+            $this->callCount[$key] = 0;
+        }
+
+        ++$this->callCount[$key];
+
+        return $this->callCount[$key].':'.(array_key_exists($key, $this->flushCount) ? $this->flushCount[$key] : 'x');
+    }
+
+    public function getTotalCallCount()
+    {
+        return array_sum($this->callCount);
+    }
+
+    public function getTotalFlushCount()
+    {
+        return array_sum($this->flushCount);
     }
 }
