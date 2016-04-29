@@ -103,7 +103,7 @@ class ConfigLoader implements \ArrayAccess
 
         // check if in cache
         if (null !== $this->cache) {
-            $cacheKey = 'conf:'.abs(crc32($file));
+            $cacheKey = $this->getCacheKeyForFile($file);
             $conf = $this->app[$this->cache]->get($cacheKey);
             if (false !== $conf) {
                 $this->config[$key] = array(
@@ -283,6 +283,9 @@ class ConfigLoader implements \ArrayAccess
             }
 
             unset($this->config[$key]);
+        }else{
+            $file = $this->getFileNameForKey($key);
+            $this->app[$this->cache]->delete($this->getCacheKeyForFile($file));
         }
     }
 
@@ -344,6 +347,16 @@ class ConfigLoader implements \ArrayAccess
     public function offsetUnset($offset)
     {
         throw new \BadMethodCallException('"offsetUnset" is not supported.');
+    }
+
+    /**
+     * @param string $file
+     *
+     * @return string
+     */
+    private function getCacheKeyForFile($file)
+    {
+        return 'conf:'.abs(crc32($file));
     }
 
     /**
