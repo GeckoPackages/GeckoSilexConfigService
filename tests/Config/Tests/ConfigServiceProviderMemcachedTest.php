@@ -13,6 +13,7 @@ namespace GeckoPackages\Silex\Services\Config\Tests;
 
 use GeckoPackages\MemcacheMock\MemcachedLogger;
 use GeckoPackages\MemcacheMock\MemcachedMock;
+use GeckoPackages\Silex\Services\Caching\MemcachedServiceProvider;
 use GeckoPackages\Silex\Services\Config\ConfigServiceProvider;
 use Silex\Application;
 
@@ -138,6 +139,35 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app[$cacheName] = $this->getMemcacheMock();
         $app['config']->setCache($cacheName);
         $this->usingCacheTest($app, $cacheName);
+    }
+
+    // Test using memcached service
+    public function testUsingMemcachedService()
+    {
+        $cacheName = 'memcache';
+        $app = new Application();
+        $app['debug'] = true;
+
+        // use MemcachedServiceProvider
+        $app->register(new MemcachedServiceProvider());
+
+        $this->setupConfigService($app, '%key%.json', $cacheName);
+
+        // Change la[a-z]* to lalalalalalala in flushTest2.json
+        shell_exec('sed -i.bak "s/la[a-z]*/lalalalalalala/g" "' . $this->getConfigDir() . '/flushTest2.json"');
+        $app['config']->flushConfig('flushTest2');
+
+        // Check
+        $result = $app['config']->get('flushTest2');
+        $this->assertSame('lalalalalalala', $result['foo']);
+
+        // Change la[a-z]* to lala in flushTest2.json
+        shell_exec('sed -i.bak "s/la[a-z]*/lala/g" "' . $this->getConfigDir() . '/flushTest2.json"');
+        $app['config']->flushConfig('flushTest2');
+
+        // Check
+        $result = $app['config']->get('flushTest2');
+        $this->assertSame('lala', $result['foo']);
     }
 
     private function usingCacheTest(Application $app, $cacheName)

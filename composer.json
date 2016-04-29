@@ -12,7 +12,8 @@
   },
   "require-dev": {
     "symfony/yaml": "~2.6",
-    "gecko-packages/gecko-memcache-mock" : "1.*"
+    "gecko-packages/gecko-memcache-mock" : "1.*",
+    "gecko-packages/gecko-silex-caching-service": "1.*"
   },
   "autoload": {
     "psr-4": {
