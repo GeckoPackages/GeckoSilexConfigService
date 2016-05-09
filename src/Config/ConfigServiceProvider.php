@@ -11,8 +11,8 @@
 
 namespace GeckoPackages\Silex\Services\Config;
 
-use Silex\Application;
-use Silex\ServiceProviderInterface;
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
 
 /**
  * Service for loading configuration.
@@ -39,27 +39,17 @@ class ConfigServiceProvider implements ServiceProviderInterface
     /**
      * {@inheritdoc}
      */
-    public function boot(Application $app)
-    {
-        //
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function register(Application $app)
+    public function register(Container $app)
     {
         $name = $this->name;
-        $app[$this->name] = $app->share(
-            function () use ($app, $name) {
-                return new ConfigLoader(
-                    $app,
-                    isset($app[$name.'.dir']) ? $app[$name.'.dir'] : null,
-                    isset($app[$name.'.format']) ? $app[$name.'.format'] : '%key%.json',
-                    isset($app[$name.'.cache']) ? $app[$name.'.cache'] : null,
-                    isset($app[$name.'.env']) ? $app[$name.'.env'] : null
-                );
-            }
-        );
+        $app[$name] = function ($app) use ($name) {
+            return new ConfigLoader(
+                $app,
+                isset($app[$name.'.dir']) ? $app[$name.'.dir'] : null,
+                isset($app[$name.'.format']) ? $app[$name.'.format'] : '%key%.json',
+                isset($app[$name.'.cache']) ? $app[$name.'.cache'] : null,
+                isset($app[$name.'.env']) ? $app[$name.'.env'] : null
+            );
+        };
     }
 }

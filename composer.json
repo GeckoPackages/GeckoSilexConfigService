@@ -6,13 +6,13 @@
   "license": "MIT",
   "keywords" : ["Silex", "Config", "Configuration", "Yaml"],
   "require": {
-    "php": "^5.4 || ^7.0",
-    "silex/silex": "~1.1",
+    "php": "^5.5 || ^7.0",
+    "silex/silex": "v2.*",
     "symfony/filesystem": "2.7.3"
   },
   "require-dev": {
     "symfony/yaml": "~2.6",
-    "gecko-packages/gecko-memcache-mock" : "1.*"
+    "gecko-packages/gecko-memcache-mock" : "^2.0"
   },
   "autoload": {
     "psr-4": {

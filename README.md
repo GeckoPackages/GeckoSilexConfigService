@@ -10,7 +10,7 @@ Supported formats:
 
 ### Requirements
 
-PHP 5.4.0
+PHP 5.5.0
 
 ### Install
 
