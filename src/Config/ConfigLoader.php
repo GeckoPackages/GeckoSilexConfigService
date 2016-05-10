@@ -17,6 +17,7 @@ use GeckoPackages\Silex\Services\Config\Loader\PHPLoader;
 use GeckoPackages\Silex\Services\Config\Loader\YamlLoader;
 use Silex\Application;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
  * @api
@@ -90,10 +91,11 @@ class ConfigLoader implements \ArrayAccess
      * @return array
      *
      * @throws FileNotFoundException
+     * @throws IOException
      */
     public function get($key)
     {
-        if (array_key_exists($key, $this->config)) {
+        if (isset($this->config[$key])) {
             // if true, 'config' is also always set
             return $this->config[$key]['config'];
         }
@@ -103,7 +105,7 @@ class ConfigLoader implements \ArrayAccess
 
         // check if in cache
         if (null !== $this->cache) {
-            $cacheKey = 'conf:'.abs(crc32($file));
+            $cacheKey = $this->getCacheKeyForFile($file);
             $conf = $this->app[$this->cache]->get($cacheKey);
             if (false !== $conf) {
                 $this->config[$key] = array(
@@ -277,13 +279,17 @@ class ConfigLoader implements \ArrayAccess
      */
     public function flushConfig($key)
     {
-        if (array_key_exists($key, $this->config)) {
-            if (null !== $this->cache && array_key_exists('cacheKey', $this->config[$key])) {
-                $this->app[$this->cache]->delete($this->config[$key]['cacheKey']);
+        if (null !== $this->cache) {
+            if (isset($this->config[$key]) && array_key_exists('cacheKey', $this->config[$key])) {
+                $cacheKey = $this->config[$key]['cacheKey'];
+            } else {
+                $cacheKey = $this->getCacheKeyForFile($this->getFileNameForKey($key));
             }
 
-            unset($this->config[$key]);
+            $this->app[$this->cache]->delete($cacheKey);
         }
+
+        unset($this->config[$key]);
     }
 
     // Magic function support, for Twig etc.,
@@ -344,6 +350,16 @@ class ConfigLoader implements \ArrayAccess
     public function offsetUnset($offset)
     {
         throw new \BadMethodCallException('"offsetUnset" is not supported.');
+    }
+
+    /**
+     * @param string $file
+     *
+     * @return string
+     */
+    private function getCacheKeyForFile($file)
+    {
+        return 'conf:'.abs(crc32($file));
     }
 
     /**
