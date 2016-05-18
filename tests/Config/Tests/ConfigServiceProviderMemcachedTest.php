@@ -53,7 +53,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $logger = $app['memcache']->getLogger();
         $logger = $logger->getLogger();
         $log = $logger->getDebugLog();
-        $this->assertCount(0, $log);
+        $this->assertCount(0, $log, 'Log should be empty on boot.');
 
         $app['config']->setDir(__DIR__);
 
