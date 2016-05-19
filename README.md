@@ -8,6 +8,8 @@ Supported formats:
 * `yml` (`yaml`)
 * `php`
 
+For Silex 1.x please see the 1.x branches of the project.
+
 ### Requirements
 
 PHP 5.5.0
@@ -19,7 +21,7 @@ Add the package to your `composer.json`.
 
 ```
 "require": {
-    "gecko-packages/gecko-silex-config-service" : "1.1"
+    "gecko-packages/gecko-silex-config-service" : "^2.0"
 }
 ```
 
