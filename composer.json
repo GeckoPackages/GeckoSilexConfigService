@@ -8,10 +8,10 @@
   "require": {
     "php": "^5.5 || ^7.0",
     "silex/silex": "v2.*",
-    "symfony/filesystem": "2.7.3"
+    "symfony/filesystem": "~2.8|3.0.*"
   },
   "require-dev": {
-    "symfony/yaml": "~2.6",
+    "symfony/yaml": "~2.8|3.0.*",
     "gecko-packages/gecko-memcache-mock" : "^2.0"
   },
   "autoload": {
@@ -20,6 +20,6 @@
     }
   },
   "suggest": {
-    "symfony/yaml": "For using Yaml formatted configuration files."
+    "symfony/yaml": "For using Yaml formatted configuration files (~2.8|3.0.*)."
   }
 }
