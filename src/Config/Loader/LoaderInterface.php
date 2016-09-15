@@ -22,11 +22,11 @@ interface LoaderInterface
     /**
      * @param string $file
      *
-     * @return array
-     *
      * @throws FileNotFoundException
      * @throws IOException
      * @throws \UnexpectedValueException
+     *
+     * @return array
      */
     public function getConfig($file);
 }

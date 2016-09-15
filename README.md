@@ -12,7 +12,7 @@ For Silex 1.x please see the 1.x branches of the project.
 
 ### Requirements
 
-PHP 5.5.0
+PHP 5.5 (PHP7 supported). Optional HHVM support >= 3.9.
 
 ### Install
 

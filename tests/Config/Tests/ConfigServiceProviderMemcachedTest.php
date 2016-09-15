@@ -44,10 +44,10 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app['memcache'] = $this->getMemcacheMock();
         $app->register(
             new ConfigServiceProvider(),
-            array(
+            [
                 'config.dir' => null,
                 'config.cache' => 'memcache',
-            )
+            ]
         );
 
         $logger = $app['memcache']->getLogger();
@@ -65,7 +65,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
 
     public function testUsingCache()
     {
-        $configValue = array('options' => array('test' => array('driver' => 'pdo_mysql')));
+        $configValue = ['options' => ['test' => ['driver' => 'pdo_mysql']]];
 
         $app = new Application();
         $app['debug'] = true;
@@ -163,7 +163,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app['config']->flushConfig('test');
 
         // warm up the cache
-        $testValue = array('test');
+        $testValue = ['test'];
         $app[$cacheName] = $this->getMemcacheMock();
         $app[$cacheName]->set($key, $testValue);
 
@@ -257,8 +257,8 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
 
 final class TestCache
 {
-    private $callCount = array();
-    private $flushCount = array();
+    private $callCount = [];
+    private $flushCount = [];
 
     public function delete($key)
     {

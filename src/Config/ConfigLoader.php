@@ -36,7 +36,7 @@ class ConfigLoader implements \ArrayAccess
      *
      * @var array<string, array>
      */
-    private $config = array();
+    private $config = [];
 
     /**
      * @var string|null
@@ -88,10 +88,10 @@ class ConfigLoader implements \ArrayAccess
      *
      * @param string $key
      *
-     * @return array
-     *
      * @throws FileNotFoundException
      * @throws IOException
+     *
+     * @return array
      */
     public function get($key)
     {
@@ -108,10 +108,10 @@ class ConfigLoader implements \ArrayAccess
             $cacheKey = $this->getCacheKeyForFile($file);
             $conf = $this->app[$this->cache]->get($cacheKey);
             if (false !== $conf) {
-                $this->config[$key] = array(
+                $this->config[$key] = [
                     'config' => $conf,
                     'cacheKey' => $cacheKey,
-                );
+                ];
 
                 return $conf;
             }
@@ -119,7 +119,7 @@ class ConfigLoader implements \ArrayAccess
 
         // Load from file
         $conf = $this->loader->getConfig($file);
-        $this->config[$key] = array('config' => $conf);
+        $this->config[$key] = ['config' => $conf];
 
         // Store in the cache
         if (null !== $this->cache) {
@@ -200,7 +200,7 @@ class ConfigLoader implements \ArrayAccess
      *
      * Triggers @see ConfigLoader::flushAll.
      *
-     * @param string $format json(.dist)|y(a)ml(.dist)|php(.dist) with variable '%key%' and optional '%env%'.
+     * @param string $format json(.dist)|y(a)ml(.dist)|php(.dist) with variable '%key%' and optional '%env%'
      */
     public function setFormat($format)
     {
@@ -213,7 +213,7 @@ class ConfigLoader implements \ArrayAccess
                 throw new \InvalidArgumentException(sprintf('Format must contain "%%key%%", got "%s".', $format));
             }
 
-            if (false ===  strrpos($format, '.')) {
+            if (false === strrpos($format, '.')) {
                 throw new \InvalidArgumentException(sprintf('Format missing extension, got "%s".', $format));
             }
         }
@@ -245,7 +245,7 @@ class ConfigLoader implements \ArrayAccess
             case 'php.dist':
                 $this->loader = new PHPLoader();
                 break;
-            default :
+            default:
                 throw new \InvalidArgumentException(sprintf('Unsupported file format "%s".', $format));
         }
 
@@ -267,7 +267,7 @@ class ConfigLoader implements \ArrayAccess
             }
         }
 
-        $this->config = array();
+        $this->config = [];
     }
 
     /**
@@ -369,6 +369,6 @@ class ConfigLoader implements \ArrayAccess
      */
     private function getFileNameForKey($key)
     {
-        return $this->getDir().strtr($this->format, array('%key%' => $key, '%env%' => $this->environment));
+        return $this->getDir().strtr($this->format, ['%key%' => $key, '%env%' => $this->environment]);
     }
 }
