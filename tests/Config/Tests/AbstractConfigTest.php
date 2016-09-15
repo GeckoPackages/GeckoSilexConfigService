@@ -30,12 +30,12 @@ abstract class AbstractConfigTest extends \PHPUnit_Framework_TestCase
     {
         $app->register(
             new ConfigServiceProvider(),
-            array(
+            [
                 'config.dir' => $this->getConfigDir(),
                 'config.format' => $format,
                 'config.cache' => $cache,
                 'config.env' => $env,
-            )
+            ]
         );
     }
 }

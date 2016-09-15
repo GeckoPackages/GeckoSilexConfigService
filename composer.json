@@ -1,25 +1,25 @@
 {
-  "name": "gecko-packages/gecko-silex-config-service",
-  "type": "library",
-  "homepage": "https://github.com/GeckoPackages",
-  "description": "Configuration service for Silex.",
-  "license": "MIT",
-  "keywords" : ["Silex", "Config", "Configuration", "Yaml"],
-  "require": {
-    "php": "^5.5 || ^7.0",
-    "silex/silex": "v2.*",
-    "symfony/filesystem": "~2.8|3.0.*"
-  },
-  "require-dev": {
-    "symfony/yaml": "~2.8|3.0.*",
-    "gecko-packages/gecko-memcache-mock" : "^2.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "GeckoPackages\\Silex\\Services\\Config\\": "src\\Config"
+    "name": "gecko-packages/gecko-silex-config-service",
+    "type": "library",
+    "homepage": "https://github.com/GeckoPackages",
+    "description": "Configuration service for Silex.",
+    "license": "MIT",
+    "keywords" : ["Silex", "Config", "Configuration", "Yaml"],
+    "require": {
+        "php": "^5.5 || ^7.0",
+        "silex/silex": "v2.*",
+        "symfony/filesystem": "~2.8|3.0.*"
+    },
+    "require-dev": {
+        "symfony/yaml": "~2.8|3.0.*",
+        "gecko-packages/gecko-memcache-mock" : "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GeckoPackages\\Silex\\Services\\Config\\": "src\\Config"
+        }
+    },
+    "suggest": {
+        "symfony/yaml": "For using Yaml formatted configuration files (~2.8|3.0.*)."
     }
-  },
-  "suggest": {
-    "symfony/yaml": "For using Yaml formatted configuration files (~2.8|3.0.*)."
-  }
 }
