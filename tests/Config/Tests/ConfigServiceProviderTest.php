@@ -27,10 +27,10 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['debug'] = true;
 
         $configDatabaseDir = realpath(__DIR__.'/../../assets').'/';
-        $app->register(new ConfigServiceProvider('config.database'), array('config.database.dir' => $configDatabaseDir));
+        $app->register(new ConfigServiceProvider('config.database'), ['config.database.dir' => $configDatabaseDir]);
 
         $configTest = realpath(__DIR__.'/../../Config').'/';
-        $app->register(new ConfigServiceProvider('config.test'), array('config.test.dir' => $configTest));
+        $app->register(new ConfigServiceProvider('config.test'), ['config.test.dir' => $configTest]);
 
         $this->assertFalse(isset($app['config']));
 
@@ -45,7 +45,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
 
     public function testPHPConfig()
     {
-        $configValue = array('test' => 1, 'lvl2' => array('20' => 'two zero', 21 => 'two one'));
+        $configValue = ['test' => 1, 'lvl2' => ['20' => 'two zero', 21 => 'two one']];
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app, '%key%.%env%.php.dist', null, 'unitTest');
@@ -72,23 +72,23 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['config']->setFormat('%key%.%env%.yml');
 
         $this->assertSame(
-            array(
+            [
                 'foo' => 'bar',
-                'leveled' => array(
+                'leveled' => [
                     'one' => 1,
                     'two' => 'second',
                     '3' => 1,
-                ),
-            ),
+                ],
+            ],
             $app['config']->get('test')
         );
 
         // test multiple files to see if the parser re use is OK
         $this->assertSame(
-            array(
+            [
                 'bar' => 'foo',
                 'home' => 'here',
-            ),
+            ],
             $app['config']->get('test2')
         );
 
@@ -104,7 +104,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->setupConfigService($app);
 
         $this->assertSame(
-            array('options' => array('test' => array('driver' => 'pdo_mysql'))),
+            ['options' => ['test' => ['driver' => 'pdo_mysql']]],
             $app['config']->get('test')
         );
 
@@ -122,7 +122,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->setupConfigService($app);
 
         $this->assertSame(
-            array('options' => array('test' => array('driver' => 'pdo_mysql'))),
+            ['options' => ['test' => ['driver' => 'pdo_mysql']]],
             $app['config']->get('test')
         );
 
@@ -130,7 +130,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['config']->setDir($dir);
 
         $this->assertSame(
-            array('options' => array('test2' => 'new_dir')),
+            ['options' => ['test2' => 'new_dir']],
             $app['config']->get('test')
         );
 
@@ -146,7 +146,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
     {
         $app = new Application();
         $app['debug'] = true;
-        $app->register(new ConfigServiceProvider(), array('config.dir' => null)); // null is a valid value upon creation
+        $app->register(new ConfigServiceProvider(), ['config.dir' => null]); // null is a valid value upon creation
         $app['config']->setDir('/a/b/c/');
     }
 
@@ -185,11 +185,11 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
 
     public function provideFormats()
     {
-        $cases = array(
-            array('%key%.json'),
-            array('%key%.yml'),
-            array('%key%.php'),
-        );
+        $cases = [
+            ['%key%.json'],
+            ['%key%.yml'],
+            ['%key%.php'],
+        ];
 
         return $cases;
     }
