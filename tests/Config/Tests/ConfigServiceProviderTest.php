@@ -13,8 +13,12 @@ namespace GeckoPackages\Silex\Services\Config\Tests;
 
 use GeckoPackages\Silex\Services\Config\ConfigServiceProvider;
 use Silex\Application;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
+ * @requires PHPUnit 5.2
+ *
  * @internal
  *
  * @author SpacePossum
@@ -138,12 +142,11 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->assertFalse($app['config']->offsetExists('test123'));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Filesystem\Exception\IOException
-     * @expectedExceptionMessageRegExp #^Config "/a/b/c/" is not a directory.$#
-     */
     public function testDirNotValidException()
     {
+        $this->expectException(IOException::class);
+        $this->expectExceptionMessageRegExp('#^Config "/a/b/c/" is not a directory.$#');
+
         $app = new Application();
         $app['debug'] = true;
         $app->register(new ConfigServiceProvider(), ['config.dir' => null]); // null is a valid value upon creation
@@ -154,12 +157,12 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
      * @param string $format
      *
      * @dataProvider provideFormats
-     *
-     * @expectedException \Symfony\Component\Filesystem\Exception\FileNotFoundException
-     * @expectedExceptionMessageRegExp #^Config file not found ".*".$#
      */
     public function testConfigFileNotFoundException($format)
     {
+        $this->expectException(FileNotFoundException::class);
+        $this->expectExceptionMessageRegExp('#^Config file not found ".*".$#');
+
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
@@ -171,11 +174,11 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
      * @param string $format
      *
      * @dataProvider provideFormats
-     *
-     * @expectedException \RuntimeException
      */
     public function testFileFormatException($format)
     {
+        $this->expectException(\RuntimeException::class);
+
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
@@ -194,60 +197,55 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         return $cases;
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp #^Unsupported file format "xls".$#
-     */
     public function testFileFormatNotSupportedException()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('#^Unsupported file format "xls".$#');
+
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
         $app['config']->setFormat('%key%.xls');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp #^Format must contain "%key%", got ".xls".$#
-     */
     public function testFileFormatMissingKeyException()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('#^Format must contain "%key%", got ".xls".$#');
+
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
         $app['config']->setFormat('.xls');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp #^Format must be a string, got "NULL".$#
-     */
     public function testFileFormatNotStringException()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('#^Format must be a string, got "NULL".$#');
+
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
         $app['config']->setFormat(null);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp #^Format missing extension, got "%key%json".$#
-     */
     public function testFileFormatNoExtensionException()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('#^Format missing extension, got "%key%json".$#');
+
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
         $app['config']->setFormat('%key%json');
     }
 
-    /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Expected array as configuration, got: "integer", in ".*integer.json".$#
-     */
     public function testJsonNotArray()
     {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Expected array as configuration, got: "integer", in ".*integer.json".$#');
+
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
