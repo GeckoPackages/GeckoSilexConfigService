@@ -17,8 +17,6 @@ use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
- * @requires PHPUnit 5.2
- *
  * @internal
  *
  * @author SpacePossum
@@ -142,6 +140,9 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->assertFalse($app['config']->offsetExists('test123'));
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testDirNotValidException()
     {
         $this->expectException(IOException::class);
@@ -154,6 +155,8 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
     }
 
     /**
+     * @requires PHPUnit 5.2
+     *
      * @param string $format
      *
      * @dataProvider provideFormats
@@ -171,6 +174,8 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
     }
 
     /**
+     * @requires PHPUnit 5.2
+     *
      * @param string $format
      *
      * @dataProvider provideFormats
@@ -197,6 +202,9 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         return $cases;
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testFileFormatNotSupportedException()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -208,6 +216,9 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['config']->setFormat('%key%.xls');
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testFileFormatMissingKeyException()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -219,6 +230,9 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['config']->setFormat('.xls');
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testFileFormatNotStringException()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -230,6 +244,9 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['config']->setFormat(null);
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testFileFormatNoExtensionException()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -241,6 +258,9 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['config']->setFormat('%key%json');
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testJsonNotArray()
     {
         $this->expectException(\UnexpectedValueException::class);
