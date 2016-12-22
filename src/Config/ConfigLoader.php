@@ -83,6 +83,74 @@ class ConfigLoader implements \ArrayAccess
         $this->cache = $cache; // always set last to prevent cache flushes on construction
     }
 
+    // Magic function support, for Twig etc.,
+    // @see http://twig.sensiolabs.org/doc/recipes.html#using-dynamic-object-properties
+
+    /**
+     * @param string $name
+     *
+     * @return array
+     */
+    public function __get($name)
+    {
+        return $this->get($name);
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        try {
+            return is_array($this->get($name));
+        } catch (FileNotFoundException $e) {
+        } // do not catch parsing errors and such
+
+        return false;
+    }
+
+    /**
+     * Flush all config loaded by this loader.
+     *
+     * Flushes the internal buffer and those in memcache (if configured).
+     */
+    public function flushAll()
+    {
+        if (null !== $this->cache) {
+            foreach ($this->config as $config) {
+                if (array_key_exists('cacheKey', $config)) {
+                    $this->app[$this->cache]->delete($config['cacheKey']);
+                }
+            }
+        }
+
+        $this->config = [];
+    }
+
+    /**
+     * Flush config from the loader.
+     *
+     * Flushes the configuration from the internal buffer and in memcache (if configured).
+     *
+     * @param string $key
+     */
+    public function flushConfig($key)
+    {
+        if (null !== $this->cache) {
+            if (isset($this->config[$key]) && array_key_exists('cacheKey', $this->config[$key])) {
+                $cacheKey = $this->config[$key]['cacheKey'];
+            } else {
+                $cacheKey = $this->getCacheKeyForFile($this->getFileNameForKey($key));
+            }
+
+            $this->app[$this->cache]->delete($cacheKey);
+        }
+
+        unset($this->config[$key]);
+    }
+
     /**
      * Get configuration by the given key.
      *
@@ -250,74 +318,6 @@ class ConfigLoader implements \ArrayAccess
         }
 
         $this->flushAll();
-    }
-
-    /**
-     * Flush all config loaded by this loader.
-     *
-     * Flushes the internal buffer and those in memcache (if configured).
-     */
-    public function flushAll()
-    {
-        if (null !== $this->cache) {
-            foreach ($this->config as $config) {
-                if (array_key_exists('cacheKey', $config)) {
-                    $this->app[$this->cache]->delete($config['cacheKey']);
-                }
-            }
-        }
-
-        $this->config = [];
-    }
-
-    /**
-     * Flush config from the loader.
-     *
-     * Flushes the configuration from the internal buffer and in memcache (if configured).
-     *
-     * @param string $key
-     */
-    public function flushConfig($key)
-    {
-        if (null !== $this->cache) {
-            if (isset($this->config[$key]) && array_key_exists('cacheKey', $this->config[$key])) {
-                $cacheKey = $this->config[$key]['cacheKey'];
-            } else {
-                $cacheKey = $this->getCacheKeyForFile($this->getFileNameForKey($key));
-            }
-
-            $this->app[$this->cache]->delete($cacheKey);
-        }
-
-        unset($this->config[$key]);
-    }
-
-    // Magic function support, for Twig etc.,
-    // @see http://twig.sensiolabs.org/doc/recipes.html#using-dynamic-object-properties
-
-    /**
-     * @param string $name
-     *
-     * @return bool
-     */
-    public function __isset($name)
-    {
-        try {
-            return is_array($this->get($name));
-        } catch (FileNotFoundException $e) {
-        } // do not catch parsing errors and such
-
-        return false;
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return array
-     */
-    public function __get($name)
-    {
-        return $this->get($name);
     }
 
     /**
