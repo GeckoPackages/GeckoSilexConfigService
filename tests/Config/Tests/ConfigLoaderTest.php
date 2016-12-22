@@ -14,24 +14,29 @@ namespace GeckoPackages\Silex\Services\Config\Tests;
 use GeckoPackages\Silex\Services\Config\ConfigLoader;
 use Silex\Application;
 
-class ConfigLoaderTest extends \PHPUnit_Framework_TestCase
+/**
+ * @requires PHPUnit 5.2
+ *
+ * @internal
+ *
+ * @author SpacePossum
+ */
+final class ConfigLoaderTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @expectedException \BadMethodCallException
-     * @expectedExceptionMessageRegExp #^"offsetSet" is not supported.$#
-     */
     public function testOffsetSet()
     {
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessageRegExp('#^"offsetSet" is not supported.$#');
+
         $loader = new ConfigLoader(new Application());
         $loader->offsetSet(1, 2);
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     * @expectedExceptionMessageRegExp #^"offsetUnset" is not supported.$#
-     */
     public function testOffsetUnset()
     {
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported.$#');
+
         $loader = new ConfigLoader(new Application());
         $loader->offsetUnset(1);
     }

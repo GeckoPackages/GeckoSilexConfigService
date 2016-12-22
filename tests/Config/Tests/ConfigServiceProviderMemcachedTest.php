@@ -141,6 +141,37 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $this->usingCacheTest($app, $cacheName);
     }
 
+    public function testCacheFlush()
+    {
+        $key = 'a';
+        $configDatabaseDir = __DIR__;
+        $app = new Application();
+        $app['debug'] = true;
+        $app['testCache'] = new TestCache();
+
+        $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
+
+        $this->assertSame('1:x', $loader->get($key));
+        $this->assertSame('1:x', $loader->get($key));
+
+        $loader->flushConfig($key);
+
+        $this->assertSame('2:1', $loader->get($key));
+        $this->assertSame('2:1', $loader->get($key));
+
+        $this->assertSame(2, $app['testCache']->getTotalCallCount());
+        $this->assertSame(1, $app['testCache']->getTotalFlushCount());
+
+        $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
+        $loader->flushConfig($key);
+
+        $this->assertSame('3:2', $loader->get($key));
+        $this->assertSame('3:2', $loader->get($key));
+
+        $this->assertSame(3, $app['testCache']->getTotalCallCount());
+        $this->assertSame(2, $app['testCache']->getTotalFlushCount());
+    }
+
     private function usingCacheTest(Application $app, $cacheName)
     {
         $app['config']->get('test');
@@ -211,37 +242,6 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $this->assertNotSame($key, $log[8][1]['key']);
         $this->assertInternalType('string', $log[8][1]['key']);
         $this->assertNotEmpty('string', $log[8][1]['key']);
-    }
-
-    public function testCacheFlush()
-    {
-        $key = 'a';
-        $configDatabaseDir = __DIR__;
-        $app = new Application();
-        $app['debug'] = true;
-        $app['testCache'] = new TestCache();
-
-        $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
-
-        $this->assertSame('1:x', $loader->get($key));
-        $this->assertSame('1:x', $loader->get($key));
-
-        $loader->flushConfig($key);
-
-        $this->assertSame('2:1', $loader->get($key));
-        $this->assertSame('2:1', $loader->get($key));
-
-        $this->assertSame(2, $app['testCache']->getTotalCallCount());
-        $this->assertSame(1, $app['testCache']->getTotalFlushCount());
-
-        $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
-        $loader->flushConfig($key);
-
-        $this->assertSame('3:2', $loader->get($key));
-        $this->assertSame('3:2', $loader->get($key));
-
-        $this->assertSame(3, $app['testCache']->getTotalCallCount());
-        $this->assertSame(2, $app['testCache']->getTotalFlushCount());
     }
 
     private function getMemcacheMock()
