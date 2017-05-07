@@ -22,6 +22,8 @@ use Symfony\Component\Filesystem\Exception\IOException;
 /**
  * @api
  *
+ * @final
+ *
  * @author SpacePossum
  */
 class ConfigLoader implements \ArrayAccess
@@ -81,6 +83,34 @@ class ConfigLoader implements \ArrayAccess
         $this->setFormat($format);
         $this->environment = null === $environment ? '' : $environment;
         $this->cache = $cache; // always set last to prevent cache flushes on construction
+    }
+
+    // Magic function support, for Twig etc.,
+    // @see http://twig.sensiolabs.org/doc/recipes.html#using-dynamic-object-properties
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        try {
+            return is_array($this->get($name));
+        } catch (FileNotFoundException $e) {
+        } // do not catch parsing errors and such
+
+        return false;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return array
+     */
+    public function __get($name)
+    {
+        return $this->get($name);
     }
 
     /**
@@ -144,10 +174,15 @@ class ConfigLoader implements \ArrayAccess
      * Set the name under which the cache to use is registered in the Application.
      *
      * @param string $cache
+     *
+     * @return $this
      */
     public function setCache($cache)
     {
+        $this->flushAll(); // flush internal cached entities
         $this->cache = $cache;
+
+        return $this;
     }
 
     /**
@@ -158,6 +193,8 @@ class ConfigLoader implements \ArrayAccess
      * @param string $dir Full path
      *
      * @throws FileNotFoundException
+     *
+     * @return $this
      */
     public function setDir($dir)
     {
@@ -169,15 +206,17 @@ class ConfigLoader implements \ArrayAccess
         if (null === $this->configDirectory) {
             $this->configDirectory = $newDir;
 
-            return;
+            return $this;
         }
 
         if ($newDir === $this->configDirectory) {
-            return;
+            return $this;
         }
 
         $this->configDirectory = $newDir;
         $this->flushAll();
+
+        return $this;
     }
 
     /**
@@ -188,11 +227,15 @@ class ConfigLoader implements \ArrayAccess
      * @see setFormat
      *
      * @param string|null $environment
+     *
+     * @return $this
      */
     public function setEnvironment($environment)
     {
         $this->environment = null === $environment ? '' : $environment;
         $this->flushAll();
+
+        return $this;
     }
 
     /**
@@ -201,6 +244,8 @@ class ConfigLoader implements \ArrayAccess
      * Triggers @see ConfigLoader::flushAll.
      *
      * @param string $format json(.dist)|y(a)ml(.dist)|php(.dist) with variable '%key%' and optional '%env%'
+     *
+     * @return $this
      */
     public function setFormat($format)
     {
@@ -250,6 +295,8 @@ class ConfigLoader implements \ArrayAccess
         }
 
         $this->flushAll();
+
+        return $this;
     }
 
     /**
@@ -290,34 +337,6 @@ class ConfigLoader implements \ArrayAccess
         }
 
         unset($this->config[$key]);
-    }
-
-    // Magic function support, for Twig etc.,
-    // @see http://twig.sensiolabs.org/doc/recipes.html#using-dynamic-object-properties
-
-    /**
-     * @param string $name
-     *
-     * @return bool
-     */
-    public function __isset($name)
-    {
-        try {
-            return is_array($this->get($name));
-        } catch (FileNotFoundException $e) {
-        } // do not catch parsing errors and such
-
-        return false;
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return array
-     */
-    public function __get($name)
-    {
-        return $this->get($name);
     }
 
     /**
