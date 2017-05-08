@@ -25,6 +25,8 @@ Add the package to your `composer.json`.
 }
 ```
 
+<sub>Use `^v1.1` if you are using Silex 1.x</sub>
+
 ## Usage
 
 The provider will find and read configuration files in a directory. The files are found
@@ -42,13 +44,13 @@ Typically the directory and format are set during registering of the service and
 
 ```php
 $app->register(
-        new GeckoPackages\Silex\Services\Config\ConfigServiceProvider(),
-        array(
-            'config.dir' => __DIR__.'/config',
-            'config.format' => '%key%.%env%.json',
-            'config.env' => 'dev',
-            'config.cache' => 'memcached',
-        )
+    new GeckoPackages\Silex\Services\Config\ConfigServiceProvider(),
+    [
+        'config.dir' => __DIR__.'/config',
+        'config.format' => '%key%.%env%.json',
+        'config.env' => 'dev',
+        'config.cache' => 'memcached',
+    ]
 );
 
 // This will read: `'__DIR__.'/config/database.dev.json` and returns an array with values.
@@ -79,23 +81,18 @@ The service takes the following options:
 
 ## Runtime options
 
-The following methods can be used to get or change properties of the service.
+The following methods can be used to get or change properties of the service at runtime (for example after registering).
 
 ```php
 // returns the current configuration directory
 $app['config']->getDir()
 
-// change the configuration directory to read from
-$app['config']->setDir($dir)
-
-// change the value used in the replacement of `%env%` in the `format`.
-$app['config']->setEnvironment($env)
-
-// change the format used to transform a key to a file name
-$app['config']->setFormat($format)
-
-// change the caching service to use (`null` to disable)
-$app['config']->setCache($name)
+$app['config']
+    ->setDir($dir)         // change the configuration directory to read from
+    ->setEnvironment($env) // change the value used in the replacement of `%env%` in the `format`.
+    ->setFormat($format)   // change the format used to transform a key to a file name
+    ->setCache($name)      // change the caching service to use (`null` to disable)
+;
 
 // when need the service can be called directly to flush
 // config values from the cache
@@ -110,7 +107,7 @@ $app['config']->flushAll()
 When using [ Twig ](http://twig.sensiolabs.org/) in combination with a config file with key `foo` which holds the data:
 ```php
 // when read and parsed by the config loader
-array("bar" => "test")
+["bar" => "test"]
 ```
 
 You can simply get the value like:
@@ -128,10 +125,10 @@ For example:
 ```php
 
 // first service
-$app->register(new ConfigServiceProvider('config.database'), array('config.database.dir' => $configDatabaseDir));
+$app->register(new ConfigServiceProvider('config.database'), ['config.database.dir' => $configDatabaseDir]);
 
 // second service
-$app->register(new ConfigServiceProvider('config.test'), array('config.test.dir' => $configTestDir));
+$app->register(new ConfigServiceProvider('config.test'), ['config.test.dir' => $configTestDir]);
 
 // usage
 $app['config.database']->get('db.user.name');
@@ -141,3 +138,15 @@ $app['config.database']->get('db.user.name');
 ### License
 
 The project is released under the MIT license, see the LICENSE file.
+
+### Contributions
+
+Contributions are welcome!
+
+### Semantic Versioning
+
+This project follows [Semantic Versioning](http://semver.org/).
+
+<sub>Kindly note:
+We do not keep a backwards compatible promise on the tests and tooling (such as document generation) of the project itself
+nor the content and/or format of exception messages.</sub>

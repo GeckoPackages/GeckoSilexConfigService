@@ -11,6 +11,7 @@
 
 namespace GeckoPackages\Silex\Services\Config\Tests;
 
+use GeckoPackages\Silex\Services\Config\ConfigLoader;
 use GeckoPackages\Silex\Services\Config\ConfigServiceProvider;
 use Silex\Application;
 
@@ -68,8 +69,10 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app, '%key%.json');
-        $app['config']->setEnvironment('dev');
-        $app['config']->setFormat('%key%.%env%.yml');
+        $r = $app['config']->setEnvironment('dev');
+        $this->assertInstanceOf(ConfigLoader::class, $r);
+        $r2 = $app['config']->setFormat('%key%.%env%.yml');
+        $this->assertSame($r2, $r);
 
         $this->assertSame(
             [
@@ -127,7 +130,8 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         );
 
         $dir = $app['config']->getDir().'../config2';
-        $app['config']->setDir($dir);
+        $r = $app['config']->setDir($dir);
+        $this->assertInstanceOf(ConfigLoader::class, $r);
 
         $this->assertSame(
             ['options' => ['test2' => 'new_dir']],
@@ -252,5 +256,18 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['debug'] = true;
         $this->setupConfigService($app);
         $app['config']->get('integer');
+    }
+
+    public function testConfigLoadingFollowsSymlinks()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+
+        $configDatabaseDir = realpath(__DIR__.'/../../assets/configSymlink/1/2').'/';
+        $app->register(new ConfigServiceProvider(), ['config.dir' => $configDatabaseDir]);
+        $this->assertSame(
+            ['symlinked' => ['foo' => 'bar']],
+            $app['config']['link1']
+        );
     }
 }
