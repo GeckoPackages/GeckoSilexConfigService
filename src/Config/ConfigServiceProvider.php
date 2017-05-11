@@ -17,6 +17,8 @@ use Pimple\ServiceProviderInterface;
 /**
  * Service for loading configuration.
  *
+ * @api
+ *
  * @author SpacePossum
  */
 final class ConfigServiceProvider implements ServiceProviderInterface

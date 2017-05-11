@@ -29,7 +29,7 @@ final class ConfigLoaderTest extends TestCase
         $loader = new ConfigLoader(new Application());
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageRegExp('#^"offsetSet" is not supported.$#');
+        $this->expectExceptionMessageRegExp('#^"offsetSet" is not supported\.$#');
 
         $loader->offsetSet(1, 2);
     }
@@ -39,7 +39,7 @@ final class ConfigLoaderTest extends TestCase
         $loader = new ConfigLoader(new Application());
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageRegExp('#^"offsetSet" is not supported.$#');
+        $this->expectExceptionMessageRegExp('#^"offsetSet" is not supported\.$#');
 
         $loader[1] = 2;
         echo $loader[1];
@@ -50,7 +50,7 @@ final class ConfigLoaderTest extends TestCase
         $loader = new ConfigLoader(new Application());
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported.$#');
+        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported\.$#');
 
         $loader->offsetUnset(1);
     }
@@ -60,7 +60,7 @@ final class ConfigLoaderTest extends TestCase
         $loader = new ConfigLoader(new Application());
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported.$#');
+        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported\.$#');
 
         unset($loader[1]);
     }

@@ -15,6 +15,8 @@ use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
+ * @api
+ *
  * @author SpacePossum
  */
 interface LoaderInterface
@@ -26,7 +28,7 @@ interface LoaderInterface
      * @throws IOException
      * @throws \UnexpectedValueException
      *
-     * @return array
+     * @return mixed
      */
-    public function getConfig(string $file): array;
+    public function getConfig(string $file);
 }

@@ -158,7 +158,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app->register(new ConfigServiceProvider(), ['config.dir' => null]); // null is a valid value upon creation
 
         $this->expectException(IOException::class);
-        $this->expectExceptionMessageRegExp('#^Config "/a/b/c/" is not a directory.$#');
+        $this->expectExceptionMessageRegExp('#^"/a/b/c/" is not a directory\.$#');
 
         $app['config']->setDir('/a/b/c/');
     }
@@ -176,7 +176,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['config']->setFormat($format);
 
         $this->expectException(FileNotFoundException::class);
-        $this->expectExceptionMessageRegExp('#^Config file not found ".*".$#');
+        $this->expectExceptionMessageRegExp('#^Config file not found ".*"\.$#');
 
         $app['config']->get('test_not_found');
     }
@@ -219,7 +219,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->setupConfigService($app);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('#^Unsupported file format "xls".$#');
+        $this->expectExceptionMessageRegExp('#^Unsupported file format "xls"\.$#');
 
         $app['config']->setFormat('%key%.xls');
     }
@@ -231,7 +231,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->setupConfigService($app);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('#^Format must contain "%key%", got ".xls".$#');
+        $this->expectExceptionMessageRegExp('#^Format must contain "%key%", got ".xls"\.$#');
 
         $app['config']->setFormat('.xls');
     }
@@ -243,9 +243,21 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->setupConfigService($app);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('#^Format missing extension, got "%key%json".$#');
+        $this->expectExceptionMessageRegExp('#^Format missing extension, got "%key%json"\.$#');
 
         $app['config']->setFormat('%key%json');
+    }
+
+    public function testJsonInvalid()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app);
+
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Error parsing JSON: "Syntax error" \[\d\], in ".*invalid\.json"\.$#');
+
+        $app['config']->get('invalid');
     }
 
     public function testJsonNotArray()
@@ -254,10 +266,27 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['debug'] = true;
         $this->setupConfigService($app);
 
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessageRegExp('#^Expected array as configuration, got: "integer", in ".*integer.json".$#');
+        $this->assertSame(123, $app['config']->get('integer'));
+    }
 
-        $app['config']->get('integer');
+    public function testJsonFalse()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app);
+
+        $this->assertFalse($app['config']->get('false'));
+        $this->assertTrue(isset($app['config']['false']));
+    }
+
+    public function testJsonNull()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app);
+
+        $this->assertNull($app['config']->get('null'));
+        $this->assertFalse(isset($app['config']['null']));
     }
 
     public function testPHPNotArray()
@@ -266,8 +295,19 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['debug'] = true;
         $this->setupConfigService($app, '%key%.php');
 
+        $this->assertSame(456, $app['config']->get('integer'));
+        $this->assertTrue(isset($app['config']['integer']));
+        $this->assertTrue(isset($app['config']['integer']));
+    }
+
+    public function testJsonYaml()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app, '%key%.yml');
+
         $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessageRegExp('#^Expected array as configuration, got: "string", in ".*invalid.php".$#');
+        $this->expectExceptionMessageRegExp('#^Failed to parse config file "(.*)invalid.yml"\..*$#');
 
         $app['config']->get('invalid');
     }
@@ -278,10 +318,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['debug'] = true;
         $this->setupConfigService($app, '%key%.yml');
 
-        $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessageRegExp('#^Expected array as configuration, got: "string", in ".*none_array.yml".$#');
-
-        $app['config']->get('none_array');
+        $this->assertSame(789, $app['config']->get('integer'));
     }
 
     public function testConfigLoadingFollowsSymlinks()

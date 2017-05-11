@@ -34,7 +34,7 @@ final class ConfigLoader implements \ArrayAccess
     /**
      * Local storage of fetched configurations.
      *
-     * @var array<string, array>
+     * @var array<string, mixed>
      */
     private $config = [];
 
@@ -100,18 +100,23 @@ final class ConfigLoader implements \ArrayAccess
      */
     public function __isset($name)
     {
+        if (isset($this->config[$name])) {
+            return isset($this->config[$name]['config']);
+        }
+
         try {
-            return is_array($this->get($name));
+            $this->get($name);
         } catch (FileNotFoundException $e) {
+            return false;
         } // do not catch parsing errors and such
 
-        return false;
+        return isset($this->config[$name]['config']);
     }
 
     /**
      * @param string $name
      *
-     * @return array
+     * @return mixed
      */
     public function __get($name)
     {
@@ -127,30 +132,28 @@ final class ConfigLoader implements \ArrayAccess
      * @throws IOException
      * @throws \UnexpectedValueException
      *
-     * @return array
+     * @return mixed
      */
-    public function get(string $key): array
+    public function get(string $key)
     {
         if (isset($this->config[$key])) {
             // if true, 'config' is also always set
             return $this->config[$key]['config'];
         }
 
-        $conf = null;
         $file = $this->getFileNameForKey($key);
 
         // check if in cache
         if (null !== $this->cache) {
             $cacheKey = $this->getCacheKeyForFile($file);
             $conf = $this->app[$this->cache]->get($cacheKey);
-
-            if (is_array($conf)) {
+            if (is_array($conf) && array_key_exists('config', $conf)) {
                 $this->config[$key] = [
-                    'config' => $conf,
+                    'config' => $conf['config'],
                     'cacheKey' => $cacheKey,
                 ];
 
-                return $conf;
+                return $conf['config'];
             }
         }
 
@@ -160,8 +163,8 @@ final class ConfigLoader implements \ArrayAccess
 
         // Store in the cache
         if (null !== $this->cache) {
+            $this->app[$this->cache]->set($cacheKey, $this->config[$key]);
             $this->config[$key]['cacheKey'] = $cacheKey;
-            $this->app[$this->cache]->set($cacheKey, $conf);
         }
 
         return $conf;
@@ -190,7 +193,7 @@ final class ConfigLoader implements \ArrayAccess
      */
     public function setCache(string $cache = null): ConfigLoader
     {
-        $this->flushAll(); // flush internal cached entities
+        $this->flushAll(); // flush cached entities (including internally)
         $this->cache = $cache;
 
         return $this;
@@ -210,7 +213,7 @@ final class ConfigLoader implements \ArrayAccess
     public function setDir(string $dir): ConfigLoader
     {
         if (!is_dir($dir)) {
-            throw new FileNotFoundException(sprintf('Config "%s" is not a directory.', $dir));
+            throw new FileNotFoundException(sprintf('"%s" is not a directory.', $dir));
         }
 
         $newDir = realpath($dir).'/';
@@ -318,7 +321,7 @@ final class ConfigLoader implements \ArrayAccess
     {
         if (null !== $this->cache) {
             foreach ($this->config as $config) {
-                if (array_key_exists('cacheKey', $config)) {
+                if (isset($config['cacheKey'])) {
                     $this->app[$this->cache]->delete($config['cacheKey']);
                 }
             }
@@ -337,12 +340,9 @@ final class ConfigLoader implements \ArrayAccess
     public function flushConfig(string $key)
     {
         if (null !== $this->cache) {
-            $cacheKey = isset($this->config[$key]) && array_key_exists('cacheKey', $this->config[$key])
-                ? $this->config[$key]['cacheKey']
-                : $this->getCacheKeyForFile($this->getFileNameForKey($key))
-            ;
-
-            $this->app[$this->cache]->delete($cacheKey);
+            $this->app[$this->cache]->delete(
+                $this->config[$key]['cacheKey'] ?? $this->getCacheKeyForFile($this->getFileNameForKey($key))
+            );
         }
 
         unset($this->config[$key]);

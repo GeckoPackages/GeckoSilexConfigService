@@ -101,7 +101,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $this->assertSame($key, $log[1][1]['key']);
 
         $value = $log[1][1]['value'];
-        $this->assertSame($configValue, $value);
+        $this->assertSame(['config' => $configValue], $value);
 
         $this->assertSame($log[2][0], 'delete');
         $this->assertSame($key, $log[2][1]['key']);
@@ -111,7 +111,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
 
         $this->assertSame($log[4][0], 'set');
         $this->assertSame($key, $log[4][1]['key']);
-        $this->assertSame($configValue, $log[4][1]['value']);
+        $this->assertSame(['config' => $configValue], $log[4][1]['value']);
 
         // setting directory to same location shouldn't trigger cache flush
         $app['config']->setDir($this->getConfigDir());
@@ -148,6 +148,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $this->setupConfigService($app, '%key%.json');
         $app[$cacheName] = $this->getMemcacheMock();
         $r = $app['config']->setCache($cacheName);
+
         $this->assertInstanceOf(ConfigLoader::class, $r);
         $this->usingCacheTest($app, $cacheName);
     }
@@ -162,13 +163,13 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
 
         $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
 
-        $this->assertSame(['1:x'], $loader->get($key));
-        $this->assertSame(['1:x'], $loader->get($key));
+        $this->assertSame('1:x', $loader->get($key));
+        $this->assertSame('1:x', $loader->get($key));
 
         $loader->flushConfig($key);
 
-        $this->assertSame(['2:1'], $loader->get($key));
-        $this->assertSame(['2:1'], $loader->get($key));
+        $this->assertSame('2:1', $loader->get($key));
+        $this->assertSame('2:1', $loader->get($key));
 
         $this->assertSame(2, $app['testCache']->getTotalCallCount());
         $this->assertSame(1, $app['testCache']->getTotalFlushCount());
@@ -176,11 +177,34 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
         $loader->flushConfig($key);
 
-        $this->assertSame(['3:2'], $loader->get($key));
-        $this->assertSame(['3:2'], $loader->get($key));
+        $this->assertSame('3:2', $loader->get($key));
+        $this->assertSame('3:2', $loader->get($key));
 
         $this->assertSame(3, $app['testCache']->getTotalCallCount());
         $this->assertSame(2, $app['testCache']->getTotalFlushCount());
+    }
+
+    public function testCachingNullAsConfigValue()
+    {
+        $cache = $this->getMemcacheMock();
+        $mLogger = $cache->getLogger();
+        /** @var TestLogger $logger */
+        $logger = $mLogger->getLogger();
+        $offset = 2;  // 1x get, 1x set
+
+        for ($i = 0; $i < 3; ++$i) {
+            $app = new Application();
+            $app['debug'] = true;
+            $app['memcache'] = $cache;
+
+            $this->setupConfigService($app);
+            $app['config']->setCache('memcache');
+
+            $this->assertNull($app['config']->get('null'));
+            $this->assertFalse(isset($app['config']['null']));
+
+            $this->assertCount($offset + $i, $logger->getDebugLog());
+        }
     }
 
     private function usingCacheTest(Application $app, string $cacheName)
@@ -208,7 +232,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app['config']->flushConfig('test');
 
         // warm up the cache
-        $testValue = ['test'];
+        $testValue = ['config' => 'test'];
         $app[$cacheName] = $this->getMemcacheMock();
         $app[$cacheName]->set($key, $testValue);
 
@@ -296,7 +320,7 @@ final class TestCache implements CacheInterface
 
         ++$this->callCount[$key];
 
-        return [$this->callCount[$key].':'.(array_key_exists($key, $this->flushCount) ? $this->flushCount[$key] : 'x')];
+        return ['config' => $this->callCount[$key].':'.(array_key_exists($key, $this->flushCount) ? $this->flushCount[$key] : 'x')];
     }
 
     public function getTotalCallCount(): int
