@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -24,7 +24,7 @@ final class JsonLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfig($file)
+    public function getConfig(string $file): array
     {
         if (false === is_file($file)) {
             throw new FileNotFoundException(sprintf('Config file not found "%s".', $file));
@@ -34,7 +34,7 @@ final class JsonLoader implements LoaderInterface
             throw new IOException(sprintf('Failed to load config file "%s".', $file));
         }
 
-        if (null === $config = json_decode($config, true)) {
+        if (null === $config = @json_decode($config, true)) {
             throw new \UnexpectedValueException(sprintf('Invalid JSON: "%s", in "%s".', json_last_error_msg(), $file));
         }
 

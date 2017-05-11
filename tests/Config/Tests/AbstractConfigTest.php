@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -12,16 +12,19 @@
 namespace GeckoPackages\Silex\Services\Config\Tests;
 
 use GeckoPackages\Silex\Services\Config\ConfigServiceProvider;
+use PHPUnit\Framework\TestCase;
 use Silex\Application;
 
 /**
+ * @requires PHPUnit 6.0
+ *
  * @internal
  *
  * @author SpacePossum
  */
-abstract class AbstractConfigTest extends \PHPUnit_Framework_TestCase
+abstract class AbstractConfigTest extends TestCase
 {
-    protected function getConfigDir()
+    protected function getConfigDir(): string
     {
         return __DIR__.'/../../assets/config';
     }

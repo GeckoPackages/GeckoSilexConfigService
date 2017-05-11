@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -15,9 +15,12 @@ use GeckoPackages\MemcacheMock\MemcachedLogger;
 use GeckoPackages\MemcacheMock\MemcachedMock;
 use GeckoPackages\Silex\Services\Config\ConfigLoader;
 use GeckoPackages\Silex\Services\Config\ConfigServiceProvider;
+use Psr\SimpleCache\CacheInterface;
 use Silex\Application;
 
 /**
+ * @requires PHPUnit 6.0
+ *
  * @internal
  *
  * @author SpacePossum
@@ -31,10 +34,13 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app['memcache'] = $this->getMemcacheMock();
         $this->setupConfigService($app, '%key%.json', 'memcache');
 
-        $logger = $app['memcache']->getLogger();
-        $logger = $logger->getLogger();
+        /** @var MemcachedLogger $mLogger */
+        $mLogger = $app['memcache']->getLogger();
+        /** @var TestLogger $logger */
+        $logger = $mLogger->getLogger();
         $log = $logger->getDebugLog();
-        $this->assertCount(0, $log);
+
+        $this->assertCount(0, $log, 'Cache log should still be empty after the service is created.');
     }
 
     public function testDoNotTouchCacheOnFirstDirSet()
@@ -50,15 +56,19 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
             ]
         );
 
-        $logger = $app['memcache']->getLogger();
-        $logger = $logger->getLogger();
+        /** @var MemcachedLogger $mLogger */
+        $mLogger = $app['memcache']->getLogger();
+        /** @var TestLogger $logger */
+        $logger = $mLogger->getLogger();
         $log = $logger->getDebugLog();
-        $this->assertCount(0, $log, 'Log should be empty on boot.');
+        $this->assertCount(0, $log, 'Cache log should still be empty after the service is created.');
 
         $app['config']->setDir(__DIR__);
 
-        $logger = $app['memcache']->getLogger();
-        $logger = $logger->getLogger();
+        /** @var MemcachedLogger $mLogger */
+        $mLogger = $app['memcache']->getLogger();
+        /** @var TestLogger $logger */
+        $logger = $mLogger->getLogger();
         $log = $logger->getDebugLog();
         $this->assertCount(0, $log);
     }
@@ -76,11 +86,11 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app['config']->flushConfig('test'); // clear cache, get -> 1 set -> 1 delete -> 1
         $app['config']->get('test');         // miss cache,  get -> 2 set -> 2 delete -> 1
 
-        /** @var MemcachedLogger $logger */
-        $logger = $app['memcache2']->getLogger();
+        /** @var MemcachedLogger $mLogger */
+        $mLogger = $app['memcache2']->getLogger();
 
         /** @var TestLogger $logger */
-        $logger = $logger->getLogger();
+        $logger = $mLogger->getLogger();
         $log = $logger->getDebugLog();
         $this->assertCount(5, $log);
 
@@ -152,13 +162,13 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
 
         $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
 
-        $this->assertSame('1:x', $loader->get($key));
-        $this->assertSame('1:x', $loader->get($key));
+        $this->assertSame(['1:x'], $loader->get($key));
+        $this->assertSame(['1:x'], $loader->get($key));
 
         $loader->flushConfig($key);
 
-        $this->assertSame('2:1', $loader->get($key));
-        $this->assertSame('2:1', $loader->get($key));
+        $this->assertSame(['2:1'], $loader->get($key));
+        $this->assertSame(['2:1'], $loader->get($key));
 
         $this->assertSame(2, $app['testCache']->getTotalCallCount());
         $this->assertSame(1, $app['testCache']->getTotalFlushCount());
@@ -166,19 +176,22 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $loader = new ConfigLoader($app, $configDatabaseDir, '%key%.json', 'testCache');
         $loader->flushConfig($key);
 
-        $this->assertSame('3:2', $loader->get($key));
-        $this->assertSame('3:2', $loader->get($key));
+        $this->assertSame(['3:2'], $loader->get($key));
+        $this->assertSame(['3:2'], $loader->get($key));
 
         $this->assertSame(3, $app['testCache']->getTotalCallCount());
         $this->assertSame(2, $app['testCache']->getTotalFlushCount());
     }
 
-    private function usingCacheTest(Application $app, $cacheName)
+    private function usingCacheTest(Application $app, string $cacheName)
     {
         $app['config']->get('test');
 
-        $logger = $app[$cacheName]->getLogger();
-        $logger = $logger->getLogger();
+        /** @var MemcachedLogger $mLogger */
+        $mLogger = $app[$cacheName]->getLogger();
+
+        /** @var TestLogger $logger */
+        $logger = $mLogger->getLogger();
 
         $log = $logger->getDebugLog();
         $this->assertCount(2, $log);
@@ -203,8 +216,10 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app['config']->get('test');
 
         /** @var MemcachedLogger $logger */
-        $logger = $app[$cacheName]->getLogger();
-        $logger = $logger->getLogger();
+        $mLogger = $app[$cacheName]->getLogger();
+
+        /** @var TestLogger $logger */
+        $logger = $mLogger->getLogger();
 
         $log = $logger->getDebugLog();
         $this->assertCount(2, $log);
@@ -229,7 +244,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $app['config']->get('flushTest');
 
         $log = $logger->getDebugLog();
-        $this->assertCount(7, $log); // get+set 2x
+        $this->assertCount(7, $log); // + ((get + set) * 2)
 
         $app['config']->flushAll();
 
@@ -245,7 +260,7 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
         $this->assertNotEmpty('string', $log[8][1]['key']);
     }
 
-    private function getMemcacheMock()
+    private function getMemcacheMock(): MemcachedMock
     {
         $mock = new MemcachedMock();
         $mock->setThrowExceptionsOnFailure(true);
@@ -256,7 +271,10 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
     }
 }
 
-final class TestCache
+/**
+ * @internal
+ */
+final class TestCache implements CacheInterface
 {
     private $callCount = [];
     private $flushCount = [];
@@ -270,7 +288,7 @@ final class TestCache
         ++$this->flushCount[$key];
     }
 
-    public function get($key)
+    public function get($key, $default = null)
     {
         if (!array_key_exists($key, $this->callCount)) {
             $this->callCount[$key] = 0;
@@ -278,16 +296,46 @@ final class TestCache
 
         ++$this->callCount[$key];
 
-        return $this->callCount[$key].':'.(array_key_exists($key, $this->flushCount) ? $this->flushCount[$key] : 'x');
+        return [$this->callCount[$key].':'.(array_key_exists($key, $this->flushCount) ? $this->flushCount[$key] : 'x')];
     }
 
-    public function getTotalCallCount()
+    public function getTotalCallCount(): int
     {
-        return array_sum($this->callCount);
+        return (int) array_sum($this->callCount);
     }
 
-    public function getTotalFlushCount()
+    public function getTotalFlushCount(): int
     {
-        return array_sum($this->flushCount);
+        return (int) array_sum($this->flushCount);
+    }
+
+    public function set($key, $value, $ttl = null)
+    {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
+    }
+
+    public function clear()
+    {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
+    }
+
+    public function getMultiple($keys, $default = null)
+    {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
+    }
+
+    public function setMultiple($values, $ttl = null)
+    {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
+    }
+
+    public function deleteMultiple($keys)
+    {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
+    }
+
+    public function has($key)
+    {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 }

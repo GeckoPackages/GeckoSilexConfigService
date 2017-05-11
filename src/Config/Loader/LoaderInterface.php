@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -28,5 +28,5 @@ interface LoaderInterface
      *
      * @return array
      */
-    public function getConfig($file);
+    public function getConfig(string $file): array;
 }

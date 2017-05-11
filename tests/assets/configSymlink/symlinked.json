@@ -1,5 +1,5 @@
 {
-  "symlinked":{
+  "symlink":{
     "foo": "bar"
   }
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -12,27 +12,56 @@
 namespace GeckoPackages\Silex\Services\Config\Tests;
 
 use GeckoPackages\Silex\Services\Config\ConfigLoader;
+use PHPUnit\Framework\TestCase;
 use Silex\Application;
 
-class ConfigLoaderTest extends \PHPUnit_Framework_TestCase
+/**
+ * @requires PHPUnit 6.0
+ *
+ * @author SpacePossum
+ *
+ * @internal
+ */
+final class ConfigLoaderTest extends TestCase
 {
-    /**
-     * @expectedException \BadMethodCallException
-     * @expectedExceptionMessageRegExp #^"offsetSet" is not supported.$#
-     */
-    public function testOffsetSet()
+    public function testOffsetSet1()
     {
         $loader = new ConfigLoader(new Application());
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessageRegExp('#^"offsetSet" is not supported.$#');
+
         $loader->offsetSet(1, 2);
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     * @expectedExceptionMessageRegExp #^"offsetUnset" is not supported.$#
-     */
-    public function testOffsetUnset()
+    public function testOffsetSet2()
     {
         $loader = new ConfigLoader(new Application());
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessageRegExp('#^"offsetSet" is not supported.$#');
+
+        $loader[1] = 2;
+        echo $loader[1];
+    }
+
+    public function testOffsetUnset1()
+    {
+        $loader = new ConfigLoader(new Application());
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported.$#');
+
         $loader->offsetUnset(1);
+    }
+
+    public function testOffsetUnset2()
+    {
+        $loader = new ConfigLoader(new Application());
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported.$#');
+
+        unset($loader[1]);
     }
 }
