@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -15,21 +15,19 @@ use GeckoPackages\Silex\Services\Config\Loader\JsonLoader;
 use GeckoPackages\Silex\Services\Config\Loader\LoaderInterface;
 use GeckoPackages\Silex\Services\Config\Loader\PHPLoader;
 use GeckoPackages\Silex\Services\Config\Loader\YamlLoader;
-use Silex\Application;
+use Pimple\Container;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
  * @api
  *
- * @final
- *
  * @author SpacePossum
  */
-class ConfigLoader implements \ArrayAccess
+final class ConfigLoader implements \ArrayAccess
 {
     /**
-     * @var Application
+     * @var Container
      */
     private $app;
 
@@ -61,20 +59,25 @@ class ConfigLoader implements \ArrayAccess
     private $cache;
 
     /**
-     * @var string|null
+     * @var string
      */
     private $environment;
 
     /**
-     * @param Application $app
+     * @param Container   $app
      * @param string|null $dir
      * @param string      $format      default: '%key%.json' @see ConfigLoader::setFormat
      * @param string|null $cache       name under which a cache service is registered,
      *                                 default: null (don't use caching)
      * @param string|null $environment default: null @see ConfigLoader::setEnvironment
      */
-    public function __construct(Application $app, $dir = null, $format = '%key%.json', $cache = null, $environment = null)
-    {
+    public function __construct(
+        Container $app,
+        string $dir = null,
+        string $format = '%key%.json',
+        string $cache = null,
+        string $environment = null
+    ) {
         $this->app = $app;
         if (null !== $dir) {
             $this->setDir($dir);
@@ -82,7 +85,9 @@ class ConfigLoader implements \ArrayAccess
 
         $this->setFormat($format);
         $this->environment = null === $environment ? '' : $environment;
-        $this->cache = $cache; // always set last to prevent cache flushes on construction
+
+        // Always set last, do not use `setCache` to prevent cache flushes on construction of the loader.
+        $this->cache = $cache;
     }
 
     // Magic function support, for Twig etc.,
@@ -120,10 +125,11 @@ class ConfigLoader implements \ArrayAccess
      *
      * @throws FileNotFoundException
      * @throws IOException
+     * @throws \UnexpectedValueException
      *
      * @return array
      */
-    public function get($key)
+    public function get(string $key): array
     {
         if (isset($this->config[$key])) {
             // if true, 'config' is also always set
@@ -137,7 +143,8 @@ class ConfigLoader implements \ArrayAccess
         if (null !== $this->cache) {
             $cacheKey = $this->getCacheKeyForFile($file);
             $conf = $this->app[$this->cache]->get($cacheKey);
-            if (false !== $conf) {
+
+            if (is_array($conf)) {
                 $this->config[$key] = [
                     'config' => $conf,
                     'cacheKey' => $cacheKey,
@@ -147,7 +154,7 @@ class ConfigLoader implements \ArrayAccess
             }
         }
 
-        // Load from file
+        // Load from file using loader
         $conf = $this->loader->getConfig($file);
         $this->config[$key] = ['config' => $conf];
 
@@ -173,11 +180,15 @@ class ConfigLoader implements \ArrayAccess
     /**
      * Set the name under which the cache to use is registered in the Application.
      *
-     * @param string $cache
+     * Set <null> to disable using cache.
+     *
+     * Triggers @see ConfigLoader::flushAll (on the previous cache service if configured).
+     *
+     * @param string|null $cache
      *
      * @return $this
      */
-    public function setCache($cache)
+    public function setCache(string $cache = null): ConfigLoader
     {
         $this->flushAll(); // flush internal cached entities
         $this->cache = $cache;
@@ -188,7 +199,7 @@ class ConfigLoader implements \ArrayAccess
     /**
      * Set the directory location for the config files.
      *
-     * Triggers @see ConfigLoader::flushAll.
+     * Triggers @see ConfigLoader::flushAll (if not the same directory is passed).
      *
      * @param string $dir Full path
      *
@@ -196,10 +207,10 @@ class ConfigLoader implements \ArrayAccess
      *
      * @return $this
      */
-    public function setDir($dir)
+    public function setDir(string $dir): ConfigLoader
     {
         if (!is_dir($dir)) {
-            throw new FileNotFoundException(sprintf('Config "%s" is not a directory.', is_string($dir) ? $dir : (is_object($dir) ? get_class($dir) : gettype($dir))));
+            throw new FileNotFoundException(sprintf('Config "%s" is not a directory.', $dir));
         }
 
         $newDir = realpath($dir).'/';
@@ -230,7 +241,7 @@ class ConfigLoader implements \ArrayAccess
      *
      * @return $this
      */
-    public function setEnvironment($environment)
+    public function setEnvironment(string $environment = null): ConfigLoader
     {
         $this->environment = null === $environment ? '' : $environment;
         $this->flushAll();
@@ -247,13 +258,9 @@ class ConfigLoader implements \ArrayAccess
      *
      * @return $this
      */
-    public function setFormat($format)
+    public function setFormat(string $format): ConfigLoader
     {
         if ($this->app['debug']) {
-            if (false === is_string($format)) {
-                throw new \InvalidArgumentException(sprintf('Format must be a string, got "%s".', is_object($format) ? get_class($format) : gettype($format)));
-            }
-
             if (false === strpos($format, '%key%')) {
                 throw new \InvalidArgumentException(sprintf('Format must contain "%%key%%", got "%s".', $format));
             }
@@ -265,16 +272,17 @@ class ConfigLoader implements \ArrayAccess
 
         $this->format = $format;
 
-        if (strlen($format) > 5 && '.dist' === substr($format, -5)) {
-            $format = substr($format, strrpos($format, '.', -6) + 1);
-        } else {
-            $format = substr($format, strrpos($format, '.') + 1);
-        }
+        // determine file extension (with or without trailing `.dist`)
+        $format = '.dist' === substr($format, -5)
+            ? substr($format, strrpos($format, '.', -6) + 1)
+            : substr($format, strrpos($format, '.') + 1)
+        ;
 
         switch ($format) {
             case 'json':
             case 'json.dist':
                 $this->loader = new JsonLoader();
+
                 break;
             case 'yml':
             case 'yml.dist':
@@ -285,10 +293,12 @@ class ConfigLoader implements \ArrayAccess
                 }
 
                 $this->loader = new YamlLoader();
+
                 break;
             case 'php':
             case 'php.dist':
                 $this->loader = new PHPLoader();
+
                 break;
             default:
                 throw new \InvalidArgumentException(sprintf('Unsupported file format "%s".', $format));
@@ -302,7 +312,7 @@ class ConfigLoader implements \ArrayAccess
     /**
      * Flush all config loaded by this loader.
      *
-     * Flushes the internal buffer and those in memcache (if configured).
+     * Flushes the internal cache and those in cache service (if configured).
      */
     public function flushAll()
     {
@@ -324,14 +334,13 @@ class ConfigLoader implements \ArrayAccess
      *
      * @param string $key
      */
-    public function flushConfig($key)
+    public function flushConfig(string $key)
     {
         if (null !== $this->cache) {
-            if (isset($this->config[$key]) && array_key_exists('cacheKey', $this->config[$key])) {
-                $cacheKey = $this->config[$key]['cacheKey'];
-            } else {
-                $cacheKey = $this->getCacheKeyForFile($this->getFileNameForKey($key));
-            }
+            $cacheKey = isset($this->config[$key]) && array_key_exists('cacheKey', $this->config[$key])
+                ? $this->config[$key]['cacheKey']
+                : $this->getCacheKeyForFile($this->getFileNameForKey($key))
+            ;
 
             $this->app[$this->cache]->delete($cacheKey);
         }
@@ -371,22 +380,12 @@ class ConfigLoader implements \ArrayAccess
         throw new \BadMethodCallException('"offsetUnset" is not supported.');
     }
 
-    /**
-     * @param string $file
-     *
-     * @return string
-     */
-    private function getCacheKeyForFile($file)
+    private function getCacheKeyForFile(string $file): string
     {
         return 'conf:'.abs(crc32($file));
     }
 
-    /**
-     * @param string $key
-     *
-     * @return string
-     */
-    private function getFileNameForKey($key)
+    private function getFileNameForKey(string $key): string
     {
         return $this->getDir().strtr($this->format, ['%key%' => $key, '%env%' => $this->environment]);
     }

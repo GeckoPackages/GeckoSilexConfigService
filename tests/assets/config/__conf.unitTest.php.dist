@@ -1,2 +1,2 @@
-<?php
+<?php declare(strict_types=1);
 return array('test' => 1, 'lvl2' => array('20' => 'two zero', 21 => 'two one'));

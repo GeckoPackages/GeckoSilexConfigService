@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -33,7 +33,7 @@ final class TestLogger implements LoggerInterface
     /**
      * @return array<array<string, array<string, mixed>>>
      */
-    public function getDebugLog()
+    public function getDebugLog(): array
     {
         return $this->debugLog;
     }
@@ -43,6 +43,7 @@ final class TestLogger implements LoggerInterface
      */
     public function emergency($message, array $context = [])
     {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 
     /**
@@ -50,6 +51,7 @@ final class TestLogger implements LoggerInterface
      */
     public function alert($message, array $context = [])
     {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 
     /**
@@ -57,6 +59,7 @@ final class TestLogger implements LoggerInterface
      */
     public function critical($message, array $context = [])
     {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 
     /**
@@ -64,6 +67,7 @@ final class TestLogger implements LoggerInterface
      */
     public function error($message, array $context = [])
     {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 
     /**
@@ -71,6 +75,7 @@ final class TestLogger implements LoggerInterface
      */
     public function warning($message, array $context = [])
     {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 
     /**
@@ -78,6 +83,7 @@ final class TestLogger implements LoggerInterface
      */
     public function notice($message, array $context = [])
     {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 
     /**
@@ -85,6 +91,7 @@ final class TestLogger implements LoggerInterface
      */
     public function info($message, array $context = [])
     {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 
     /**
@@ -92,5 +99,6 @@ final class TestLogger implements LoggerInterface
      */
     public function log($level, $message, array $context = [])
     {
+        throw new \BadMethodCallException(sprintf('"%s" should not be used by during the test.', __METHOD__));
     }
 }

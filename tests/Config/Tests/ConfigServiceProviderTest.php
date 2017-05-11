@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -14,8 +14,12 @@ namespace GeckoPackages\Silex\Services\Config\Tests;
 use GeckoPackages\Silex\Services\Config\ConfigLoader;
 use GeckoPackages\Silex\Services\Config\ConfigServiceProvider;
 use Silex\Application;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
+ * @requires PHPUnit 6.0
+ *
  * @internal
  *
  * @author SpacePossum
@@ -36,12 +40,35 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->assertFalse(isset($app['config']));
 
         $this->assertTrue(isset($app['config.database']));
-        $this->assertInstanceOf('GeckoPackages\Silex\Services\Config\ConfigLoader', $app['config.database']);
+        $this->assertInstanceOf(ConfigLoader::class, $app['config.database']);
         $this->assertSame($configDatabaseDir, $app['config.database']->getDir());
 
         $this->assertTrue(isset($app['config.test']));
-        $this->assertInstanceOf('GeckoPackages\Silex\Services\Config\ConfigLoader', $app['config.test']);
+        $this->assertInstanceOf(ConfigLoader::class, $app['config.test']);
         $this->assertSame($configTest, $app['config.test']->getDir());
+    }
+
+    public function testJSONConfig()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app);
+
+        $this->assertSame(
+            ['options' => ['test' => ['driver' => 'pdo_mysql']]],
+            $app['config']->get('test')
+        );
+
+        $this->assertSame(
+            $app['config']->get('test'),
+            $app['config']['test']
+        );
+
+        // simple flush test
+        $app['config']->flushConfig('test');
+
+        // test flush unknown key, shouldn't be a problem
+        $app['config']->flushConfig('test1');
     }
 
     public function testPHPConfig()
@@ -100,24 +127,6 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->assertSame('foo', $app['config']['test2']['bar']);
     }
 
-    public function testJSONConfig()
-    {
-        $app = new Application();
-        $app['debug'] = true;
-        $this->setupConfigService($app);
-
-        $this->assertSame(
-            ['options' => ['test' => ['driver' => 'pdo_mysql']]],
-            $app['config']->get('test')
-        );
-
-        // simple flush test
-        $app['config']->flushConfig('test');
-
-        // test flush unknown key, shouldn't be a problem
-        $app['config']->flushConfig('test1');
-    }
-
     public function testDirSwapping()
     {
         $app = new Application();
@@ -142,15 +151,15 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $this->assertFalse($app['config']->offsetExists('test123'));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Filesystem\Exception\IOException
-     * @expectedExceptionMessageRegExp #^Config "/a/b/c/" is not a directory.$#
-     */
     public function testDirNotValidException()
     {
         $app = new Application();
         $app['debug'] = true;
         $app->register(new ConfigServiceProvider(), ['config.dir' => null]); // null is a valid value upon creation
+
+        $this->expectException(IOException::class);
+        $this->expectExceptionMessageRegExp('#^Config "/a/b/c/" is not a directory.$#');
+
         $app['config']->setDir('/a/b/c/');
     }
 
@@ -158,16 +167,17 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
      * @param string $format
      *
      * @dataProvider provideFormats
-     *
-     * @expectedException \Symfony\Component\Filesystem\Exception\FileNotFoundException
-     * @expectedExceptionMessageRegExp #^Config file not found ".*".$#
      */
-    public function testConfigFileNotFoundException($format)
+    public function testConfigFileNotFoundException(string $format)
     {
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
         $app['config']->setFormat($format);
+
+        $this->expectException(FileNotFoundException::class);
+        $this->expectExceptionMessageRegExp('#^Config file not found ".*".$#');
+
         $app['config']->get('test_not_found');
     }
 
@@ -175,19 +185,23 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
      * @param string $format
      *
      * @dataProvider provideFormats
-     *
-     * @expectedException \RuntimeException
      */
-    public function testFileFormatException($format)
+    public function testFileFormatException(string $format)
     {
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
         $app['config']->setFormat($format);
+
+        $this->expectException(\RuntimeException::class);
+
         $app['config']->get('invalid');
     }
 
-    public function provideFormats()
+    /**
+     * @return array<array<string>>
+     */
+    public function provideFormats(): array
     {
         $cases = [
             ['%key%.json'],
@@ -198,64 +212,76 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         return $cases;
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp #^Unsupported file format "xls".$#
-     */
     public function testFileFormatNotSupportedException()
     {
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('#^Unsupported file format "xls".$#');
+
         $app['config']->setFormat('%key%.xls');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp #^Format must contain "%key%", got ".xls".$#
-     */
     public function testFileFormatMissingKeyException()
     {
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('#^Format must contain "%key%", got ".xls".$#');
+
         $app['config']->setFormat('.xls');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp #^Format must be a string, got "NULL".$#
-     */
-    public function testFileFormatNotStringException()
-    {
-        $app = new Application();
-        $app['debug'] = true;
-        $this->setupConfigService($app);
-        $app['config']->setFormat(null);
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp #^Format missing extension, got "%key%json".$#
-     */
     public function testFileFormatNoExtensionException()
     {
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('#^Format missing extension, got "%key%json".$#');
+
         $app['config']->setFormat('%key%json');
     }
 
-    /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Expected array as configuration, got: "integer", in ".*integer.json".$#
-     */
     public function testJsonNotArray()
     {
         $app = new Application();
         $app['debug'] = true;
         $this->setupConfigService($app);
+
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Expected array as configuration, got: "integer", in ".*integer.json".$#');
+
         $app['config']->get('integer');
+    }
+
+    public function testPHPNotArray()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app, '%key%.php');
+
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Expected array as configuration, got: "string", in ".*invalid.php".$#');
+
+        $app['config']->get('invalid');
+    }
+
+    public function testYamlNotArray()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app, '%key%.yml');
+
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Expected array as configuration, got: "string", in ".*none_array.yml".$#');
+
+        $app['config']->get('none_array');
     }
 
     public function testConfigLoadingFollowsSymlinks()
@@ -266,7 +292,7 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $configDatabaseDir = realpath(__DIR__.'/../../assets/configSymlink/1/2').'/';
         $app->register(new ConfigServiceProvider(), ['config.dir' => $configDatabaseDir]);
         $this->assertSame(
-            ['symlinked' => ['foo' => 'bar']],
+            ['symlink' => ['foo' => 'bar']],
             $app['config']['link1']
         );
     }

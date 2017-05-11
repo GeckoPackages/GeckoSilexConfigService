@@ -8,11 +8,10 @@ Supported formats:
 * `yml` (`yaml`)
 * `php`
 
-For Silex 1.x please see the 1.x branches of the project.
-
 ### Requirements
 
-PHP 5.5 (PHP7 supported). Optional HHVM support >= 3.9.
+PHP 7.0 / Silex 2<br/>
+<sub>See `Install` for more supported versions.</sub>
 
 ### Install
 
@@ -21,11 +20,12 @@ Add the package to your `composer.json`.
 
 ```
 "require": {
-    "gecko-packages/gecko-silex-config-service" : "^2.0"
+    "gecko-packages/gecko-silex-config-service" : "^3.0"
 }
 ```
 
-<sub>Use `^v1.1` if you are using Silex 1.x</sub>
+<sub>Use `^v2.1` if you are using Silex 2.x with PHP 5.5.</sub>
+<sub>Use `^v1.1` if you are using Silex 1.x.</sub>
 
 ## Usage
 
@@ -53,7 +53,7 @@ $app->register(
     ]
 );
 
-// This will read: `'__DIR__.'/config/database.dev.json` and returns an array with values.
+// This will read: `'__DIR__.'/config/database.dev.json` and returns the decoded json.
 $app['config']->get('database');
 
 // array access is also supported
@@ -74,6 +74,8 @@ The service takes the following options:
 * `config.cache`
   Name under which a caching service is registered on the application.
   The default is `null`, which means caching is disabled. [`string`]
+  The service must be [PSR-16](https://github.com/php-fig/simple-cache/blob/1.0.0/src/CacheInterface.php) compliant with respect to the `get`, `set` and `delete` methods
+  (however it does not have to explicitly implement the PSR-16 interface).
 
 * `config.env`
   The value of the `environment`, this is (optional) used to replace the
@@ -94,8 +96,7 @@ $app['config']
     ->setCache($name)      // change the caching service to use (`null` to disable)
 ;
 
-// when need the service can be called directly to flush
-// config values from the cache
+// the service can be called directly to flush config values from the cache
 $app['config']->flushConfig($key)
 
 // flush all known items
@@ -125,13 +126,15 @@ For example:
 ```php
 
 // first service
-$app->register(new ConfigServiceProvider('config.database'), ['config.database.dir' => $configDatabaseDir]);
+$app->register(new ConfigServiceProvider('config_database'), ['config.database.dir' => $configDatabaseDir]);
 
 // second service
-$app->register(new ConfigServiceProvider('config.test'), ['config.test.dir' => $configTestDir]);
+$app->register(new ConfigServiceProvider('config_test'), ['config.test.dir' => $configTestDir]);
 
 // usage
-$app['config.database']->get('db.user.name');
+$app['config_database']->get('userName');
+
+// in Twig; {{ app.config_database.userName }}
 
 ```
 
@@ -148,5 +151,5 @@ Contributions are welcome!
 This project follows [Semantic Versioning](http://semver.org/).
 
 <sub>Kindly note:
-We do not keep a backwards compatible promise on the tests and tooling (such as document generation) of the project itself
-nor the content and/or format of exception messages.</sub>
+We do not keep a backwards compatible promise on code annotated with `@internal`, the tests and tooling (such as document generation) of the project itself
+nor the content and/or format of exception/error messages.</sub>

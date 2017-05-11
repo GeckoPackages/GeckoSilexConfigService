@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -36,7 +36,7 @@ final class YamlLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfig($file)
+    public function getConfig(string $file): array
     {
         if (false === is_file($file)) {
             throw new FileNotFoundException(sprintf('Config file not found "%s".', $file));
@@ -50,6 +50,10 @@ final class YamlLoader implements LoaderInterface
             $config = $this->parser->parse($config);
         } catch (ParseException $e) {
             throw new IOException(sprintf('Failed to parse config file "%s". %s', $file, $e->getMessage()), $e->getCode(), $e);
+        }
+
+        if (false === is_array($config)) {
+            throw new \UnexpectedValueException(sprintf('Expected array as configuration, got: "%s", in "%s".', gettype($config), $file));
         }
 
         return $config;

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -17,23 +17,16 @@ use Pimple\ServiceProviderInterface;
 /**
  * Service for loading configuration.
  *
- * @final
- *
  * @author SpacePossum
  */
-class ConfigServiceProvider implements ServiceProviderInterface
+final class ConfigServiceProvider implements ServiceProviderInterface
 {
     /**
      * @var string
      */
     private $name;
 
-    /**
-     * ConfigServiceProvider constructor.
-     *
-     * @param string $name
-     */
-    public function __construct($name = 'config')
+    public function __construct(string $name = 'config')
     {
         $this->name = $name;
     }
@@ -44,13 +37,13 @@ class ConfigServiceProvider implements ServiceProviderInterface
     public function register(Container $app)
     {
         $name = $this->name;
-        $app[$name] = function ($app) use ($name) {
+        $app[$name] = function (Container $app) use ($name) {
             return new ConfigLoader(
                 $app,
-                isset($app[$name.'.dir']) ? $app[$name.'.dir'] : null,
-                isset($app[$name.'.format']) ? $app[$name.'.format'] : '%key%.json',
-                isset($app[$name.'.cache']) ? $app[$name.'.cache'] : null,
-                isset($app[$name.'.env']) ? $app[$name.'.env'] : null
+                $app[$name.'.dir'] ?? null,
+                $app[$name.'.format'] ?? '%key%.json',
+                $app[$name.'.cache'] ?? null,
+                $app[$name.'.env'] ?? null
             );
         };
     }

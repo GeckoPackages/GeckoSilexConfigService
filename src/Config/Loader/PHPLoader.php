@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the GeckoPackages.
@@ -23,13 +23,14 @@ final class PHPLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfig($file)
+    public function getConfig(string $file): array
     {
         if (false === is_file($file)) {
             throw new FileNotFoundException(sprintf('Config file not found "%s".', $file));
         }
 
         $config = require $file;
+
         if (false === is_array($config)) {
             throw new \UnexpectedValueException(sprintf('Expected array as configuration, got: "%s", in "%s".', gettype($config), $file));
         }
