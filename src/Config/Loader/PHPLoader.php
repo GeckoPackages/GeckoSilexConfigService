@@ -23,18 +23,12 @@ final class PHPLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfig(string $file): array
+    public function getConfig(string $file)
     {
         if (false === is_file($file)) {
             throw new FileNotFoundException(sprintf('Config file not found "%s".', $file));
         }
 
-        $config = require $file;
-
-        if (false === is_array($config)) {
-            throw new \UnexpectedValueException(sprintf('Expected array as configuration, got: "%s", in "%s".', gettype($config), $file));
-        }
-
-        return $config;
+        return require $file;
     }
 }

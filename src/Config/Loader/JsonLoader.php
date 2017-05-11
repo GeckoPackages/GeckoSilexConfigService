@@ -24,7 +24,7 @@ final class JsonLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfig(string $file): array
+    public function getConfig(string $file)
     {
         if (false === is_file($file)) {
             throw new FileNotFoundException(sprintf('Config file not found "%s".', $file));
@@ -35,11 +35,15 @@ final class JsonLoader implements LoaderInterface
         }
 
         if (null === $config = @json_decode($config, true)) {
-            throw new \UnexpectedValueException(sprintf('Invalid JSON: "%s", in "%s".', json_last_error_msg(), $file));
-        }
-
-        if (false === is_array($config)) {
-            throw new \UnexpectedValueException(sprintf('Expected array as configuration, got: "%s", in "%s".', gettype($config), $file));
+            $err = json_last_error();
+            if (JSON_ERROR_NONE !== $err) {
+                throw new \UnexpectedValueException(sprintf(
+                    'Error parsing JSON: "%s" [%d], in "%s".',
+                    json_last_error_msg(),
+                    $err,
+                    $file
+                ));
+            }
         }
 
         return $config;

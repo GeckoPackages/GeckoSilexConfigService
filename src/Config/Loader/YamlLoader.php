@@ -36,7 +36,7 @@ final class YamlLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfig(string $file): array
+    public function getConfig(string $file)
     {
         if (false === is_file($file)) {
             throw new FileNotFoundException(sprintf('Config file not found "%s".', $file));
@@ -49,11 +49,7 @@ final class YamlLoader implements LoaderInterface
         try {
             $config = $this->parser->parse($config);
         } catch (ParseException $e) {
-            throw new IOException(sprintf('Failed to parse config file "%s". %s', $file, $e->getMessage()), $e->getCode(), $e);
-        }
-
-        if (false === is_array($config)) {
-            throw new \UnexpectedValueException(sprintf('Expected array as configuration, got: "%s", in "%s".', gettype($config), $file));
+            throw new \UnexpectedValueException(sprintf('Failed to parse config file "%s". %s', $file, $e->getMessage()), $e->getCode(), $e);
         }
 
         return $config;

@@ -9,4 +9,4 @@
  * with this source code in the file LICENSE.
  */
 
-return '__invalid__';
+return 456;
