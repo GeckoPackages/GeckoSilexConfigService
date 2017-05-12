@@ -25,7 +25,7 @@ use Silex\Application;
  *
  * @author SpacePossum
  */
-final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
+final class ConfigServiceProviderCacheUsageTest extends AbstractConfigTest
 {
     public function testDoNotTouchCacheOnConstruction()
     {
@@ -205,6 +205,33 @@ final class ConfigServiceProviderMemcachedTest extends AbstractConfigTest
 
             $this->assertCount($offset + $i, $logger->getDebugLog());
         }
+    }
+
+    public function testUnsetConfigItemCausesItemFlushedFromCache()
+    {
+        $cache = $this->getMemcacheMock();
+        $mLogger = $cache->getLogger();
+        /** @var TestLogger $logger */
+        $logger = $mLogger->getLogger();
+
+        $app = new Application();
+        $app['debug'] = true;
+        $app['memcache'] = $cache;
+
+        $this->setupConfigService($app);
+        $app['config']->setCache('memcache');
+
+        $this->assertNull($app['config']->get('null'));
+        $this->assertCount(2, $logger->getDebugLog()); // get and set
+
+        unset($app['config']['null']);
+
+        $log = $logger->getDebugLog();
+        $this->assertCount(3, $log); // get, set and delete
+        $this->assertSame('delete', $log[2][0]);
+
+        $this->assertNull($app['config']->get('null'));
+        $this->assertCount(5, $logger->getDebugLog()); // get, set, delete, get, set
     }
 
     private function usingCacheTest(Application $app, string $cacheName)

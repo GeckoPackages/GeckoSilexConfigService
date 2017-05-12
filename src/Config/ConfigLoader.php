@@ -333,19 +333,13 @@ final class ConfigLoader implements \ArrayAccess
     /**
      * Flush config from the loader.
      *
-     * Flushes the configuration from the internal buffer and in memcache (if configured).
+     * Flushes the configuration from the internal buffer and the cache (if configured).
      *
      * @param string $key
      */
     public function flushConfig(string $key)
     {
-        if (null !== $this->cache) {
-            $this->app[$this->cache]->delete(
-                $this->config[$key]['cacheKey'] ?? $this->getCacheKeyForFile($this->getFileNameForKey($key))
-            );
-        }
-
-        unset($this->config[$key]);
+        $this->offsetUnset($key);
     }
 
     /**
@@ -377,7 +371,13 @@ final class ConfigLoader implements \ArrayAccess
      */
     public function offsetUnset($offset)
     {
-        throw new \BadMethodCallException('"offsetUnset" is not supported.');
+        if (null !== $this->cache) {
+            $this->app[$this->cache]->delete(
+                $this->config[$offset]['cacheKey'] ?? $this->getCacheKeyForFile($this->getFileNameForKey($offset))
+            );
+        }
+
+        unset($this->config[$offset]);
     }
 
     private function getCacheKeyForFile(string $file): string

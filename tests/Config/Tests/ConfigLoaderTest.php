@@ -44,24 +44,4 @@ final class ConfigLoaderTest extends TestCase
         $loader[1] = 2;
         echo $loader[1];
     }
-
-    public function testOffsetUnset1()
-    {
-        $loader = new ConfigLoader(new Application());
-
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported\.$#');
-
-        $loader->offsetUnset(1);
-    }
-
-    public function testOffsetUnset2()
-    {
-        $loader = new ConfigLoader(new Application());
-
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessageRegExp('#^"offsetUnset" is not supported\.$#');
-
-        unset($loader[1]);
-    }
 }

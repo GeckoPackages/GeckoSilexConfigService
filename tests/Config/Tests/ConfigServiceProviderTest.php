@@ -54,21 +54,41 @@ final class ConfigServiceProviderTest extends AbstractConfigTest
         $app['debug'] = true;
         $this->setupConfigService($app);
 
-        $this->assertSame(
-            ['options' => ['test' => ['driver' => 'pdo_mysql']]],
-            $app['config']->get('test')
-        );
+        // loop so re-fetching after flush is also tested
+        for ($i = 0; $i < 2; ++$i) {
+            $this->assertSame(
+                ['options' => ['test' => ['driver' => 'pdo_mysql']]],
+                $app['config']->get('test')
+            );
 
-        $this->assertSame(
-            $app['config']->get('test'),
-            $app['config']['test']
-        );
+            $this->assertSame(
+                $app['config']->get('test'),
+                $app['config']['test']
+            );
 
-        // simple flush test
-        $app['config']->flushConfig('test');
+            // simple flush test
+            $app['config']->flushConfig('test');
 
-        // test flush unknown key, shouldn't be a problem
-        $app['config']->flushConfig('test1');
+            // test flush unknown key, shouldn't be a problem
+            $app['config']->flushConfig('test1');
+        }
+    }
+
+    public function testJSONConfigUnset()
+    {
+        $app = new Application();
+        $app['debug'] = true;
+        $this->setupConfigService($app);
+
+        // loop so re-fetching after unset is also tested
+        for ($i = 0; $i < 2; ++$i) {
+            $this->assertSame(
+                ['options' => ['test' => ['driver' => 'pdo_mysql']]],
+                $app['config']['test']
+            );
+
+            unset($app['config']['test']); // should not be a problem
+        }
     }
 
     public function testPHPConfig()
