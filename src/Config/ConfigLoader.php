@@ -191,7 +191,7 @@ final class ConfigLoader implements \ArrayAccess
      *
      * @return $this
      */
-    public function setCache(string $cache = null): ConfigLoader
+    public function setCache(string $cache = null): self
     {
         $this->flushAll(); // flush cached entities (including internally)
         $this->cache = $cache;
@@ -210,7 +210,7 @@ final class ConfigLoader implements \ArrayAccess
      *
      * @return $this
      */
-    public function setDir(string $dir): ConfigLoader
+    public function setDir(string $dir): self
     {
         if (!is_dir($dir)) {
             throw new FileNotFoundException(sprintf('"%s" is not a directory.', $dir));
@@ -244,7 +244,7 @@ final class ConfigLoader implements \ArrayAccess
      *
      * @return $this
      */
-    public function setEnvironment(string $environment = null): ConfigLoader
+    public function setEnvironment(string $environment = null): self
     {
         $this->environment = null === $environment ? '' : $environment;
         $this->flushAll();
@@ -261,7 +261,7 @@ final class ConfigLoader implements \ArrayAccess
      *
      * @return $this
      */
-    public function setFormat(string $format): ConfigLoader
+    public function setFormat(string $format): self
     {
         if ($this->app['debug']) {
             if (false === strpos($format, '%key%')) {

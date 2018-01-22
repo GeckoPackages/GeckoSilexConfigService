@@ -11,15 +11,18 @@
         "Yaml"
     ],
     "require": {
-        "php": "^7.0",
+        "php": ">=7.0.8",
         "silex/silex": "v2.*",
-        "symfony/filesystem": "~2.8|3.0.*"
+        "symfony/filesystem": "~2.8|3.*|4.*"
     },
     "require-dev": {
         "gecko-packages/gecko-memcache-mock": "^2.0",
         "psr/simple-cache": "^1.0",
         "symfony/phpunit-bridge": "^2.8|^3.0",
         "symfony/yaml": "~2.8|3.0.*"
+    },
+    "conflict": {
+        "hhvm": "*"
     },
     "autoload": {
         "psr-4": {
