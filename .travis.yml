@@ -9,36 +9,29 @@ matrix:
     fast_finish: true
     include:
         - php: 5.5
-          env: COMPOSER_FLAGS="--prefer-stable"
+          env: COMPOSER_FLAGS="--prefer-lowest"
         - php: 5.6
           env: COMPOSER_FLAGS="--prefer-stable"
         - php: 7.0
           env: COMPOSER_FLAGS="--prefer-stable"
         - php: 7.1
           env: COMPOSER_FLAGS="--dev"
+        - php: 7.2
+          env: COMPOSER_FLAGS="--dev --prefer-lowest"
+        - php: 7.2
+          env: COMPOSER_FLAGS="--dev --prefer-stable"
         - php: nightly
-          env: COMPOSER_FLAGS="--dev --ignore-platform-reqs"
-        - php: hhvm-3.9
-          sudo: required
-          dist: trusty
-          group: edge
-          env: COMPOSER_FLAGS="--prefer-stable --ignore-platform-reqs"
-        - php: hhvm-nightly
-          sudo: required
-          dist: trusty
-          group: edge
           env: COMPOSER_FLAGS="--dev --ignore-platform-reqs"
     allow_failures:
         - php: nightly
-        - php: hhvm-nightly
 
 install:
     - composer update $COMPOSER_FLAGS --no-interaction -v
-    - if [[ $TRAVIS_PHP_VERSION = 7.0 ]]; then curl -L https://github.com/FriendsOfPHP/PHP-CS-Fixer/releases/download/v2.3.1/php-cs-fixer.phar -o php-cs-fixer.phar; fi
+    - if [[ $TRAVIS_PHP_VERSION = 7.1 ]]; then curl -L https://github.com/FriendsOfPHP/PHP-CS-Fixer/releases/download/v2.10.0/php-cs-fixer.phar -o php-cs-fixer.phar; fi
 
 script:
     - phpenv config-rm xdebug.ini || return 0
     - composer info -D | sort
     - vendor/bin/phpunit --verbose
-    - if [[ $TRAVIS_PHP_VERSION = 7.0 ]]; then php php-cs-fixer.phar --dry-run -v fix; fi
-    - if [[ $TRAVIS_PHP_VERSION = 7.0 ]]; then files_with_trailing_spaces=`find . -type f -not -path "./.git/*" -not -path "./vendor/*" -not -name "php-cs-fixer.phar" -exec egrep -nH " $" {} \;` && [[ $files_with_trailing_spaces ]] && echo $files_with_trailing_spaces && travis_terminate 1 || echo "No trailing spaces detected."; fi
+    - if [[ $TRAVIS_PHP_VERSION = 7.1 ]]; then php php-cs-fixer.phar --dry-run -v fix; fi
+    - if [[ $TRAVIS_PHP_VERSION = 7.1 ]]; then files_with_trailing_spaces=`find . -type f -not -path "./.git/*" -not -path "./vendor/*" -not -name "php-cs-fixer.phar" -exec egrep -nH " $" {} \;` && [[ $files_with_trailing_spaces ]] && echo $files_with_trailing_spaces && travis_terminate 1 || echo "No trailing spaces detected."; fi
